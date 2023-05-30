@@ -1,0 +1,6 @@
+journeys:
+  - legs:
+    - type: bus
+      id: 268685422
+      origin: 14683958716
+      destination: 14683958747
