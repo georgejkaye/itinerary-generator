@@ -15,7 +15,7 @@ def get_bus_stop_url(id: int, dt: datetime = datetime.now()) -> str:
     return f"https://bustimes.org/stops/{id}?date={date_string}&time={time_string}"
 
 
-def get_bus_service_url(id: int, stop_time: Optional[int] = None) -> str:
+def get_bus_trip_url(id: int, stop_time: Optional[int] = None) -> str:
     if stop_time:
         stop_time_string = "#stop-time-{stop_time}"
     else:
@@ -33,19 +33,18 @@ def get_bus_stop_name(stop_page: BeautifulSoup) -> str:
     return results.text
 
 
-def get_bus_service_page(id: int, stop_time: Optional[int] = None) -> BeautifulSoup:
-    service_url = get_bus_service_url(id, stop_time=stop_time)
-    print(service_url)
-    return get_page(service_url)
+def get_bus_trip_page(id: int, stop_time: Optional[int] = None) -> BeautifulSoup:
+    trip_url = get_bus_trip_url(id, stop_time=stop_time)
+    return get_page(trip_url)
 
 
-def get_bus_number(service_page: BeautifulSoup) -> str:
-    results = service_page.find("h2").text.strip().replace("\n", "")
+def get_bus_number(trip_page: BeautifulSoup) -> str:
+    results = trip_page.find("h2").text.strip().replace("\n", "")
     return results.split("-")[0]
 
 
-def get_stop_details_from_service(service_page: BeautifulSoup, origin_time: int) -> Tuple[str, int, time]:
-    row = service_page.find("tr", id=f"stop-time-{origin_time}")
+def get_stop_details_from_trip(trip_page: BeautifulSoup, stop_time: int) -> Tuple[str, int, time]:
+    row = trip_page.find("tr", id=f"stop-time-{stop_time}")
     link = row.select_one("a")
     href = link["href"].split("/")[2]
     stop = link.text
