@@ -29,7 +29,7 @@ def get_bus_stop_page(id: int, origin_dt: datetime) -> BeautifulSoup:
 
 
 def get_bus_stop_name(stop_page: BeautifulSoup) -> str:
-    results = stop_page.find("h1")
+    results = stop_page.select_one("h1")
     return results.text
 
 
@@ -39,14 +39,14 @@ def get_bus_trip_page(id: int, stop_time: Optional[int] = None) -> BeautifulSoup
 
 
 def get_bus_number(trip_page: BeautifulSoup) -> str:
-    results = trip_page.find("h2").text.strip().replace("\n", "")
+    results = trip_page.select_one("h2").text.strip().replace("\n", "")
     return results.split("-")[0]
 
 
 def get_stop_details_from_trip(trip_page: BeautifulSoup, stop_time: int) -> Tuple[str, int, time]:
-    row = trip_page.find("tr", id=f"stop-time-{stop_time}")
+    row = trip_page.select_one("tr", id=f"stop-time-{stop_time}")
     link = row.select_one("a")
-    href = link["href"].split("/")[2]
+    stop_id = link["href"].split("/")[2]
     stop = link.text
     (hours, minutes) = row.select("td")[1].text.strip().split(":")
     time_obj = time(hour=int(hours), minute=int(minutes))
