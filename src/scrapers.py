@@ -50,4 +50,14 @@ def get_stop_details_from_trip(trip_page: BeautifulSoup, stop_time: int) -> Tupl
     stop = link.text
     (hours, minutes) = row.select("td")[1].text.strip().split(":")
     time_obj = time(hour=int(hours), minute=int(minutes))
-    return (href, stop, time_obj)
+    return (stop, stop_id, time_obj)
+
+
+def get_stop_time_from_stop_id(trip_page: BeautifulSoup, stop_id: int) -> Optional[int]:
+    rows = trip_page.select("tr")
+    for row in rows:
+        link = row.select_one("a")
+        candidate_stop_id = link["href"].split("/")[2]
+        if int(candidate_stop_id) == stop_id:
+            return row["id"].split("-")[2]
+    return None
