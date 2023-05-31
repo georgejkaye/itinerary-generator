@@ -135,7 +135,7 @@ def get_bus_trip(id: int) -> BusTrip:
     (trip_number, trip_slug) = get_bus_service_number_and_slug(page)
     (origin, destination) = get_trip_origin_and_destination(page)
     stops = get_all_trip_stop_details(page)
-    return BusTrip(id, trip_number, trip_slug, origin, destination, stops[0].time, stops)
+    return BusTrip(id, trip_number, trip_slug, origin, destination, stops[0].stop_time, stops)
 
 
 def get_bus_trip_segment(trip: BusTrip, board: int, alight: int) -> Optional[BusTripSegment]:
@@ -148,9 +148,11 @@ def get_bus_trip_segment(trip: BusTrip, board: int, alight: int) -> Optional[Bus
             if start is None:
                 return None
             end = i
-            start_time = trip.stops[start].time
-            end_time = trip.stops[end].time
+            start_time = trip.stops[start].stop_time
+            end_time = trip.stops[end].stop_time
             duration = datetime.combine(
                 date.min, end_time) - datetime.combine(date.min, start_time)
-            return BusTripSegment(trip, start, end, duration)
+            board_stop = get_bus_stop(trip.stops[start].atco)
+            alight_stop = get_bus_stop(trip.stops[end].atco)
+            return BusTripSegment(trip, start, board_stop, start_time, end, alight_stop, end_time, duration)
     return None

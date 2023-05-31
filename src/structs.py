@@ -6,7 +6,7 @@ from typing import List, Optional
 @dataclass
 class BusStop:
     name: str
-    stand: Optional[str]
+    platform: Optional[str]
     lat: float
     lon: float
     naptan: str
@@ -29,11 +29,18 @@ class BusService:
     colour: Optional[str]
 
 
+def get_short_time_string(t: time) -> str:
+    return time.strftime(t, "%H%M")
+
+
 @dataclass
 class BusTripStop:
     name: str
     atco: int
-    time: time
+    stop_time: time
+
+    def get_time_string(self) -> str:
+        return get_short_time_string(self.stop_time)
 
 
 @dataclass
@@ -61,15 +68,25 @@ def get_duration_string(d: timedelta) -> str:
 @dataclass
 class BusTripSegment:
     trip: BusTrip
-    board: int
-    alight: int
+    board_index: int
+    board: BusStop
+    board_time: time
+    alight_index: int
+    alight: BusStop
+    alight_time: time
     duration: timedelta
 
     def get_segment_stops(self) -> List[BusTripStop]:
-        return self.trip.stops[self.board:self.alight+1]
+        return self.trip.stops[self.board_index:self.alight_index+1]
 
-    def get_boarding_stop(self) -> BusTripStop:
-        return self.trip.stops[self.board]
+    def get_intermediate_stops(self) -> List[BusTripStop]:
+        return self.trip.stops[self.board_index+1:self.alight_index]
 
-    def get_alighting_stop(self) -> BusTripStop:
-        return self.trip.stops[self.alight]
+    def get_duration_string(self) -> str:
+        return get_duration_string(self.duration)
+
+    def get_board_time_string(self) -> str:
+        return get_short_time_string(self.board_time)
+
+    def get_alight_time_string(self) -> str:
+        return get_short_time_string(self.alight_time)
