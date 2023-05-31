@@ -1,0 +1,61 @@
+{%- macro bus(trip) -%}
+<table>
+    <tr>
+        <td>
+            <div style="display: flex; align-items: center;">
+                <div style="font-size: 1.5em; font-weight: bold; border: 1pt solid black; padding: 2px 5px; margin-right: 10px">
+                    <a href="https://bustimes.org/services/{{ trip.trip.service_slug }}">
+                        {{ trip.trip.service }}
+                    </a>
+                </div>
+                <div style="font-size: 1.5em; font-weight: bold; margin-right: 10px">
+                    {{ trip.trip.destination }}
+                </div>
+                <div style="font-style: italic; color: gray">
+                    {{ trip.get_segment_stops() | length }} stops, {{ trip.get_duration_string() }}
+                </div>
+            </div>
+        </td>
+    </tr>
+    <tr>
+        <td>
+            <div style="font-size: 1.5em">
+                <a href="https://bustimes.org/stops/{{ trip.board.atco }}">
+                    {{ trip.board.name }}
+                </a>
+            </div>
+            <div style="font-style: italic; color: gray">
+                {{ trip.board.platform }}
+            </div>
+        </td>
+        <td style="font-size: 1.5em; font-weight: bold">
+            {{ trip.get_board_time_string() }}
+        </td>
+    </tr>
+    {% for stop in trip.get_intermediate_stops() %}
+        <tr>
+            <td>
+                - <a href="https://bustimes.org/stops/{{ stop.atco }}">
+                    {{ stop.name }}
+                </a>
+            </td>
+            <td>
+                {{ stop.get_time_string() }}
+            </td>
+        </tr>
+    {% endfor %}
+    <tr><td>
+        <div style="font-size: 1.5em">
+            <a href="https://bustimes.org/stops/{{ trip.alight.atco }}">
+                {{ trip.alight.name }}
+            </a>
+        </div>
+        <div style="font-style: italic; color: gray">
+            {{ trip.alight.platform }}
+        </div>
+    </td>
+    <td style="font-size: 1.5em; font-weight: bold">
+        {{ trip.get_alight_time_string() }}
+    </td></tr>
+</table>
+{% endmacro %}
