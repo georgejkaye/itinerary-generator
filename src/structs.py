@@ -36,6 +36,7 @@ def get_short_time_string(t: time) -> str:
 @dataclass
 class BusTripStop:
     name: str
+    location: Optional[str]
     atco: str
     arr_time: time
     dep_time: time

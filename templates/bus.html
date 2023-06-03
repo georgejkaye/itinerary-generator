@@ -36,8 +36,9 @@
         <tr>
             <td>
                 - <a href="https://bustimes.org/stops/{{ stop.atco }}">
-                    {{ stop.name }}
+                    {{ stop.name -}}
                 </a>
+                <span style="font-style: italic; color: gray">{{ stop.location }}</span>
             </td>
             <td>
                 {% if stop.get_dep_time_string() != stop.get_arr_time_string() %}
