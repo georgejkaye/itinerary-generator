@@ -57,7 +57,7 @@ class BusTrip:
 def get_duration_string(d: timedelta) -> str:
     seconds = d.seconds
     hours = int(seconds / 3600)
-    minutes = int(seconds / 60)
+    minutes = int((seconds % 3600) / 60)
     if hours > 0:
         hour_string = f"{hours}h"
     else:
