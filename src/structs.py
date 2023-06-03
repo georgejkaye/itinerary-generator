@@ -37,10 +37,14 @@ def get_short_time_string(t: time) -> str:
 class BusTripStop:
     name: str
     atco: str
-    stop_time: time
+    arr_time: time
+    dep_time: time
 
-    def get_time_string(self) -> str:
-        return get_short_time_string(self.stop_time)
+    def get_arr_time_string(self) -> str:
+        return get_short_time_string(self.arr_time)
+
+    def get_dep_time_string(self) -> str:
+        return get_short_time_string(self.dep_time)
 
 
 @dataclass

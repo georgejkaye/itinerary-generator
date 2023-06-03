@@ -40,7 +40,12 @@
                 </a>
             </td>
             <td>
-                {{ stop.get_time_string() }}
+                {% if stop.get_dep_time_string() != stop.get_arr_time_string() %}
+                    <div>{{ stop.get_arr_time_string() }}<b>a</b></div>
+                    <div>{{ stop.get_dep_time_string() }}<b>d</b></div>
+                {% else %}
+                    <div>{{ stop.get_arr_time_string() }}</div>
+                {% endif %}
             </td>
         </tr>
     {% endfor %}

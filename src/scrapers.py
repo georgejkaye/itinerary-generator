@@ -101,23 +101,51 @@ def get_bus_service_number_and_slug(trip_page: BeautifulSoup) -> Tuple[str, str]
     return (number, slug)
 
 
-def get_trip_stop_details(row: Tag) -> BusTripStop:
-    link = row.select_one("a")
+def get_trip_stop_details(arr_row: Tag, dep_row: Optional[Tag]) -> BusTripStop:
+    link = arr_row.select_one("a")
     stop_id = link["href"].split("/")[2]
     stop_name = link.text
-    (hours, minutes) = row.select("td")[1].text.strip().split(":")
-    time_obj = time(hour=int(hours), minute=int(minutes))
-    return BusTripStop(stop_name, stop_id, time_obj)
+    (arr_hours, arr_minutes) = arr_row.select("td")[1].text.strip().split(":")
+    arr_time = time(hour=int(arr_hours), minute=int(arr_minutes))
+    if dep_row is None:
+        dep_time = arr_time
+    else:
+        (dep_hours, dep_minutes) = dep_row.select_one(
+            "td").text.strip().split(":")
+        dep_time = time(hour=int(dep_hours), minute=int(dep_minutes))
+    return BusTripStop(stop_name, stop_id, arr_time, dep_time)
 
 
 def get_trip_stop_details_at_time(trip_page: BeautifulSoup, stop_time: int) -> BusTripStop:
-    row = trip_page.select_one(f"[id=\"stop-time-{stop_time}\"")
-    return get_trip_stop_details(row)
+    rows = trip_page.select(".trip-timetable tbody tr")
+    desired_id = f"stop-time-{stop_time}"
+    for (i, row) in enumerate(rows):
+        if row["id"] == desired_id:
+            td = row.select_one("td")
+            if td["rowspan"] == 2:
+                arr_row = row
+                dep_row = rows[i+1]
+            else:
+                arr_row = row
+                dep_row = None
+    return get_trip_stop_details(arr_row=arr_row, dep_row=dep_row)
 
 
 def get_all_trip_stop_details(trip_page: BeautifulSoup) -> List[BusTripStop]:
-    rows = trip_page.select("[id*=\"stop-time\"]")
-    return list(map(lambda r: get_trip_stop_details(r), rows))
+    rows = trip_page.select(".trip-timetable tbody tr")
+    stop_rows = []
+    current_index = 0
+    while current_index < len(rows):
+        arr_row = rows[current_index]
+        td = arr_row.select_one("td")
+        if td.attrs.get("rowspan") is not None and td.attrs["rowspan"] == '2':
+            dep_row = rows[current_index + 1]
+            current_index = current_index + 2
+        else:
+            dep_row = None
+            current_index = current_index + 1
+        stop_rows.append((arr_row, dep_row))
+    return list(map(lambda r: get_trip_stop_details(r[0], r[1]), stop_rows))
 
 
 def get_stop_time_from_stop_id(trip_page: BeautifulSoup, stop_id: int) -> Optional[int]:
@@ -135,7 +163,7 @@ def get_bus_trip(id: int) -> BusTrip:
     (trip_number, trip_slug) = get_bus_service_number_and_slug(page)
     (origin, destination) = get_trip_origin_and_destination(page)
     stops = get_all_trip_stop_details(page)
-    return BusTrip(id, trip_number, trip_slug, origin, destination, stops[0].stop_time, stops)
+    return BusTrip(id, trip_number, trip_slug, origin, destination, stops[0].dep_time, stops)
 
 
 def get_bus_trip_segment(trip: BusTrip, board: str, alight: str) -> Optional[BusTripSegment]:
@@ -148,8 +176,8 @@ def get_bus_trip_segment(trip: BusTrip, board: str, alight: str) -> Optional[Bus
             if start is None:
                 return None
             end = i
-            start_time = trip.stops[start].stop_time
-            end_time = trip.stops[end].stop_time
+            start_time = trip.stops[start].dep_time
+            end_time = trip.stops[end].arr_time
             duration = datetime.combine(
                 date.min, end_time) - datetime.combine(date.min, start_time)
             board_stop = get_bus_stop(trip.stops[start].atco)
