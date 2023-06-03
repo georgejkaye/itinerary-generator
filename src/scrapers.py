@@ -12,10 +12,10 @@ def get_page(url: str) -> BeautifulSoup:
     return BeautifulSoup(page.content, "html.parser")
 
 
-def get_bus_stop_url(id: int, dt: datetime = datetime.now()) -> str:
+def get_bus_stop_url(atco: str, dt: datetime = datetime.now()) -> str:
     date_string = datetime.strftime(dt, "%Y-%m-%d")
     time_string = datetime.strftime(dt, "%H%%3A%M")
-    return f"https://bustimes.org/stops/{id}?date={date_string}&time={time_string}"
+    return f"https://bustimes.org/stops/{atco}?date={date_string}&time={time_string}"
 
 
 def get_bus_trip_url(id: int, stop_time: Optional[int] = None) -> str:
@@ -26,8 +26,8 @@ def get_bus_trip_url(id: int, stop_time: Optional[int] = None) -> str:
     return f"https://bustimes.org/trips/{id}{stop_time_string}"
 
 
-def get_bus_stop_page(id: int, origin_dt: datetime) -> BeautifulSoup:
-    stop_url = get_bus_stop_url(id, origin_dt)
+def get_bus_stop_page(atco: str, origin_dt: datetime) -> BeautifulSoup:
+    stop_url = get_bus_stop_url(atco, origin_dt)
     return get_page(stop_url)
 
 
@@ -50,16 +50,16 @@ def get_bus_stop_naptan(stop_page: BeautifulSoup) -> str:
     return result.text
 
 
-def get_bus_stop_atco(stop_page: BeautifulSoup) -> int:
+def get_bus_stop_atco(stop_page: BeautifulSoup) -> str:
     result = stop_page.select_one("[title=\"ATCO code\"]")
-    return int(result.text)
+    return result.text
 
 
 bracket_regex = r"(.*) \((.*)\)"
 
 
-def get_bus_stop(id: int) -> BusStop:
-    stop_url = get_bus_stop_url(id)
+def get_bus_stop(atco: str) -> BusStop:
+    stop_url = get_bus_stop_url(atco)
     page = get_page(stop_url)
     stop_name = get_bus_stop_name(page)
     bracket_matches = re.match(bracket_regex, stop_name)
@@ -103,7 +103,7 @@ def get_bus_service_number_and_slug(trip_page: BeautifulSoup) -> Tuple[str, str]
 
 def get_trip_stop_details(row: Tag) -> BusTripStop:
     link = row.select_one("a")
-    stop_id = int(link["href"].split("/")[2])
+    stop_id = link["href"].split("/")[2]
     stop_name = link.text
     (hours, minutes) = row.select("td")[1].text.strip().split(":")
     time_obj = time(hour=int(hours), minute=int(minutes))
@@ -138,13 +138,13 @@ def get_bus_trip(id: int) -> BusTrip:
     return BusTrip(id, trip_number, trip_slug, origin, destination, stops[0].stop_time, stops)
 
 
-def get_bus_trip_segment(trip: BusTrip, board: int, alight: int) -> Optional[BusTripSegment]:
+def get_bus_trip_segment(trip: BusTrip, board: str, alight: str) -> Optional[BusTripSegment]:
     start = None
     end = None
     for (i, stop) in enumerate(trip.stops):
-        if stop.atco == board:
+        if stop.atco == str(board):
             start = i
-        elif stop.atco == alight:
+        elif stop.atco == str(alight):
             if start is None:
                 return None
             end = i

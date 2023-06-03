@@ -10,7 +10,7 @@ class BusStop:
     lat: float
     lon: float
     naptan: str
-    atco: int
+    atco: str
 
 
 @dataclass
@@ -36,7 +36,7 @@ def get_short_time_string(t: time) -> str:
 @dataclass
 class BusTripStop:
     name: str
-    atco: int
+    atco: str
     stop_time: time
 
     def get_time_string(self) -> str:
