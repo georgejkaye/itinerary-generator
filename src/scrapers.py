@@ -103,18 +103,22 @@ def get_bus_service_number_and_slug(trip_page: BeautifulSoup) -> Tuple[str, str]
     return (number, slug)
 
 
+def get_time_from_trip_stop_row(row: Tag, cell_index: int) -> time:
+    time_text = row.select(
+        "td")[cell_index].contents[0].replace("\n", "").strip()
+    (hours, minutes) = time_text.split(":")
+    return time(hour=int(hours), minute=int(minutes))
+
+
 def get_trip_stop_details(arr_row: Tag, dep_row: Optional[Tag]) -> BusTripStop:
     link = arr_row.select_one("a")
     stop_id = link["href"].split("/")[2]
     stop_name = link.text
-    (arr_hours, arr_minutes) = arr_row.select("td")[1].text.strip().split(":")
-    arr_time = time(hour=int(arr_hours), minute=int(arr_minutes))
+    arr_time = get_time_from_trip_stop_row(arr_row, 1)
     if dep_row is None:
         dep_time = arr_time
     else:
-        (dep_hours, dep_minutes) = dep_row.select_one(
-            "td").text.strip().split(":")
-        dep_time = time(hour=int(dep_hours), minute=int(dep_minutes))
+        dep_time = get_time_from_trip_stop_row(dep_row, 0)
     return BusTripStop(stop_name, stop_id, arr_time, dep_time)
 
 
