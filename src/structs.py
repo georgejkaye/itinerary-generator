@@ -9,7 +9,7 @@ class BusStop:
     platform: Optional[str]
     lat: float
     lon: float
-    naptan: str
+    naptan: Optional[str]
     atco: str
 
 

@@ -45,8 +45,10 @@ def get_bus_stop_latlon(stop_page: BeautifulSoup) -> Tuple[float, float]:
     return (float(lat), float(lon))
 
 
-def get_bus_stop_naptan(stop_page: BeautifulSoup) -> str:
+def get_bus_stop_naptan(stop_page: BeautifulSoup) -> Optional[str]:
     result = stop_page.select_one("[title=\"NaPTAN code\"]")
+    if result is None:
+        return None
     return result.text
 
 
