@@ -6,7 +6,7 @@ from typing import List, Optional
 @dataclass
 class BusStop:
     name: str
-    platform: Optional[str]
+    location: Optional[str]
     lat: float
     lon: float
     naptan: Optional[str]

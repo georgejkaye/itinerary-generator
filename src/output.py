@@ -1,5 +1,5 @@
 from jinja2 import Environment, FileSystemLoader, select_autoescape
-from structs import BusTripSegment
+from bus.structs import BusTripSegment
 
 
 def write_output(trip: BusTripSegment):

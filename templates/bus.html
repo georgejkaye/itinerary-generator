@@ -24,9 +24,11 @@
                     {{ trip.board.name }}
                 </a>
             </div>
-            <div style="font-style: italic; color: gray">
-                {{ trip.board.platform }}
-            </div>
+            {% if trip.board.location is not none %}
+                <div style="font-style: italic; color: gray">
+                    {{ trip.board.location }}
+                </div>
+            {% endif %}
         </td>
         <td style="font-size: 1.5em; font-weight: bold">
             {{ trip.get_board_time_string() }}
@@ -38,7 +40,9 @@
                 - <a href="https://bustimes.org/stops/{{ stop.atco }}">
                     {{ stop.name -}}
                 </a>
-                <span style="font-style: italic; color: gray">{{ stop.location }}</span>
+                {% if stop.location is not none %}
+                    <span style="font-style: italic; color: gray">{{ stop.location }}</span>
+                {% endif %}
             </td>
             <td>
                 {% if stop.get_dep_time_string() != stop.get_arr_time_string() %}
@@ -56,9 +60,11 @@
                 {{ trip.alight.name }}
             </a>
         </div>
-        <div style="font-style: italic; color: gray">
-            {{ trip.alight.platform }}
-        </div>
+        {% if trip.board.location is not none %}
+            <div style="font-style: italic; color: gray">
+                {{ trip.alight.location }}
+            </div>
+        {% endif %}
     </td>
     <td style="font-size: 1.5em; font-weight: bold">
         {{ trip.get_alight_time_string() }}

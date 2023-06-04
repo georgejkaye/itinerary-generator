@@ -4,7 +4,7 @@ import requests
 from bs4 import BeautifulSoup, Tag  # type: ignore
 from datetime import date, datetime, time
 
-from structs import BusStop, BusTrip, BusTripSegment, BusTripStop
+from bus.structs import BusStop, BusTrip, BusTripSegment, BusTripStop
 
 
 def get_page(url: str) -> BeautifulSoup:
