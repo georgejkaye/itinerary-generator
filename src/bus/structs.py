@@ -82,10 +82,10 @@ class BusTripSegment:
     duration: timedelta
 
     def get_segment_stops(self) -> List[BusTripStop]:
-        return self.trip.stops[self.board_index:self.alight_index+1]
+        return self.trip.stops[self.board_index : self.alight_index + 1]
 
     def get_intermediate_stops(self) -> List[BusTripStop]:
-        return self.trip.stops[self.board_index+1:self.alight_index]
+        return self.trip.stops[self.board_index + 1 : self.alight_index]
 
     def get_duration_string(self) -> str:
         return get_duration_string(self.duration)

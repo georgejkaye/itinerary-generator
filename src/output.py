@@ -5,8 +5,7 @@ from bus.structs import BusTripSegment
 def write_output(trip: BusTripSegment):
     template = "templates/index.html"
     env = Environment(
-        loader=FileSystemLoader("templates"),
-        autoescape=select_autoescape()
+        loader=FileSystemLoader("templates"), autoescape=select_autoescape()
     )
     index = env.get_template("index.html")
     html = index.render(trip=trip)
