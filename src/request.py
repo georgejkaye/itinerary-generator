@@ -1,9 +1,25 @@
+from dataclasses import dataclass
+from typing import Optional
 from bs4 import BeautifulSoup, ResultSet, Tag
 import requests
+from requests import Response
+from requests.auth import HTTPBasicAuth
+
+from credentials import Credentials
 
 
-def get_page(url: str) -> BeautifulSoup:
-    page = requests.get(url)
+def make_request(
+    url: str, credentials: Optional[Credentials] = None, stream: bool = False
+) -> Response:
+    if credentials is not None:
+        auth = HTTPBasicAuth(credentials.user, credentials.password)
+    else:
+        auth = None
+    return requests.get(url, auth=auth, stream=stream)
+
+
+def get_page(url: str, credentials: Optional[Credentials] = None) -> BeautifulSoup:
+    page = make_request(url, credentials)
     return BeautifulSoup(page.content, "html.parser")
 
 
