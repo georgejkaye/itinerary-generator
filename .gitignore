@@ -1,3 +1,8 @@
+# downloaded data
+data/
+
+# dotenv
+.env
 
 # VS code
 .vscode
