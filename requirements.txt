@@ -1,6 +1,8 @@
 Jinja2
 beautifulsoup4
 pyyaml
+dataclasses-json
+python-dotenv
 
 types-requests
 types-beautifulsoup4
