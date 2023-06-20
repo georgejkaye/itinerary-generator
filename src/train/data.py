@@ -1,83 +1,134 @@
+import csv
 import gzip
 import json
+import math
 import os
+from pathlib import Path
 import shutil
-import string
-from typing import List
+import chardet
+from convertbng.util import convert_lonlat
+from typing import Dict, List, Tuple, Optional
 from bs4 import Tag
+from credentials import get_api_credentials
+
 
 from request import Credentials, get_page, make_request, select_all, select_one
 from train.structs import TrainStation
+
+data_directory = Path("data")
+corpus_path = data_directory / "corpus.json"
+bplan_path = data_directory / "bplan.tsv"
+tiploc_to_crs_path = data_directory / "tiploc-to-crs.json"
+crs_to_tiploc_path = data_directory / "crs-to-tiploc.json"
+station_json_path = data_directory / "stations.json"
+
+
+def get_bplan_data_url() -> str:
+    return "https://wiki.openraildata.com/images/0/0e/Geography_20221210_to_20230520_from_20221211.txt.gz"
 
 
 def get_corpus_data_url() -> str:
     return "https://publicdatafeeds.networkrail.co.uk/ntrod/SupportingFileAuthenticate?type=CORPUS"
 
 
-def download_corpus(corpus_creds: Credentials):
-    corpus_url = get_corpus_data_url()
-    response = make_request(corpus_url, credentials=corpus_creds, stream=True)
+def extract_gz(gz_path: str, output_path: str):
+    with gzip.open(gz_path, "rb") as f:
+        with open(output_path, "wb") as out:
+            shutil.copyfileobj(f, out)
+    os.remove(gz_path)
+
+
+def download_binary(url: str, path: str, credentials: Optional[Credentials] = None):
+    response = make_request(url, credentials=credentials, stream=True)
     if response.status_code != 200:
         raise RuntimeError("Could not get CORPUS")
-    with open("data/corpus.gz", "wb") as f:
+    with open(path, "wb") as f:
         f.write(response.raw.read())
-    with gzip.open("data/corpus.gz", "rb") as f:
-        with open("data/corpus.json", "wb") as out:
-            shutil.copyfileobj(f, out)
-    os.remove("data/corpus.gz")
 
 
-def get_station_data_url_for_letter(letter: str) -> str:
-    return f"http://www.railwaycodes.org.uk/stations/station{letter}.shtm"
+def download_corpus(corpus_creds: Credentials):
+    corpus_url = get_corpus_data_url()
+    corpus_download_path = "data/corpus.gz"
+    download_binary(corpus_url, corpus_download_path, credentials=corpus_creds)
+    extract_gz(corpus_download_path, corpus_path)
 
 
-def get_station_crs_url_for_letter(letter: str) -> str:
-    return f"http://www.railwaycodes.org.uk/crs/crs{letter}.shtm"
+def download_bplan():
+    bplan_url = get_bplan_data_url()
+    bplan_download_path = "data/bplan.gz"
+    download_binary(bplan_url, bplan_download_path)
+    extract_gz(bplan_download_path, bplan_path)
+
+
+def translate_corpus_to_translators(
+    corpus: dict,
+) -> Tuple[Dict[str, str], Dict[str, str]]:
+    stns = corpus["TIPLOCDATA"]
+    tiploc_to_crs = {}
+    crs_to_tiploc = {}
+    for stn in stns:
+        tiploc = stn["TIPLOC"]
+        crs = stn["3ALPHA"]
+        if not (tiploc == " " or crs == " "):
+            tiploc_to_crs[tiploc] = crs
+            crs_to_tiploc[crs] = tiploc
+    return (tiploc_to_crs, crs_to_tiploc)
+
+
+def translate_bplan_to_stations(
+    bplan: list, tiploc_to_crs: Dict[str, str]
+) -> List[TrainStation]:
+    stations = []
+    found_locs = False
+    for row in bplan:
+        if row[0] == "LOC":
+            found_locs = True
+            tiploc = row[2]
+            crs = tiploc_to_crs.get(tiploc)
+            if crs is not None:
+                name = row[3]
+                east = int(row[6])
+                north = int(row[7])
+                if not (east == 0 or north == 0):
+                    (lons, lats) = convert_lonlat([east], [north])
+                    (lon, lat) = (lons[0], lats[0])
+                    if math.isnan(lon):
+                        lon = None
+                    if math.isnan(lat):
+                        lat = None
+                else:
+                    (lon, lat) = (None, None)
+                station = TrainStation(name, crs, tiploc, lat, lon)
+                stations.append(station)
+        elif found_locs:
+            break
+    return stations
+
+
+def write_dict_as_json(data: dict, path: str):
+    data_json = json.dumps(data)
+    with open(path, "w") as f:
+        f.write(data_json)
+
+
+def read_json_as_dict(path: str) -> dict:
+    with open(path, "r") as f:
+        data = f.read()
+    return json.loads(data)
+
+
+def read_tsv_as_list(path: str) -> list:
+    rows = []
+    with open(path, "r", encoding="ASCII", errors="ignore") as f:
+        data = csv.reader(f, delimiter="\t")
+        for row in data:
+            rows.append(row)
+    return rows
 
 
 def has_crs(tag: Tag) -> bool:
-    cells = select_all("td")
+    cells = select_all(tag, "td")
     return not cells[1].has_attr("class")
-
-
-def get_station_data_for_letter(letter: str) -> List[TrainStation]:
-    url = get_station_data_url_for_letter(letter)
-    data_page = get_page(url)
-    rows = select_all(data_page, "tbody tr")
-    stations = []
-    for row in rows:
-        cols = select_all(row, "td")
-        status_col = cols[2]
-        if not "closed" in status_col.text.lower():
-            station_col = select_one(row, "td")
-            name = station_col.find(text=True, recursive=False)
-            try:
-                crs = select_one(station_col, ".r").text[1:-1]
-            except RuntimeError:
-                continue
-            lon_text = cols[5].text
-            if lon_text == "":
-                lon = None
-            else:
-                lon = float(lon_text.replace("\r", "\n").split("\n")[0])
-            lat_text = cols[6].text
-            if lat_text == "":
-                lat = None
-            else:
-                lat = float(lat_text.replace("\r", "\n").split("\n")[0])
-            station = TrainStation(name, crs, lat, lon)
-            stations.append(station)
-    return stations
-
-
-def get_station_data() -> List[TrainStation]:
-    stations: List[TrainStation] = []
-    for i in range(0, 26):
-        letter = string.ascii_lowercase[i]
-        print(f"Getting stations for {letter.upper()}...")
-        letter_stations = get_station_data_for_letter(letter)
-        stations = stations + letter_stations
-    return stations
 
 
 def write_station_data(stations: List[TrainStation], file: str):
@@ -98,3 +149,24 @@ def write_crs_tiploc_translator(stations: List[TrainStation], file: str):
         crs_dict[stn.crs] = stn.tiploc
     with open(file, "w") as f:
         f.write(json.dumps(crs_dict, indent=4))
+
+
+def read_tiploc_crs_translator() -> Dict[str, str]:
+    return read_json_as_dict(tiploc_to_crs_path)
+
+
+def read_crs_tiploc_translator() -> Dict[str, str]:
+    return read_json_as_dict(crs_to_tiploc_path)
+
+
+def setup_data():
+    download_corpus(get_api_credentials("NR"))
+    corpus = read_json_as_dict(corpus_path)
+    (tiploc_to_crs, crs_to_tiploc) = translate_corpus_to_translators(corpus)
+    write_dict_as_json(tiploc_to_crs, tiploc_to_crs_path)
+    write_dict_as_json(crs_to_tiploc, crs_to_tiploc_path)
+    download_bplan()
+    bplan = read_tsv_as_list(bplan_path)
+    stations = translate_bplan_to_stations(bplan, tiploc_to_crs)
+    print(stations)
+    write_station_data(stations, station_json_path)
