@@ -22,7 +22,16 @@ class TrainStop:
 
 
 @dataclass
+class ServiceStop:
+    stop: TrainStop
+    arrival: Optional[datetime]
+    departure: Optional[datetime]
+
+
+@dataclass
 class TrainService:
     headcode: str
     origins: List[str]
-    date: datetime
+    destinations: List[str]
+    datetime: datetime
+    stops: List[ServiceStop]

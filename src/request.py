@@ -19,8 +19,7 @@ def make_request(
 
 
 def get_json(url: str, credentials: Optional[Credentials] = None) -> dict:
-    page = make_request(url, credentials=credentials).json()
-    return json.loads(page)
+    return make_request(url, credentials=credentials).json()
 
 
 def get_page(url: str, credentials: Optional[Credentials] = None) -> BeautifulSoup:
