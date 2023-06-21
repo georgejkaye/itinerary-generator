@@ -6,7 +6,7 @@ import os
 from pathlib import Path
 import shutil
 import chardet
-from convertbng.util import convert_lonlat
+from convertbng.util import convert_lonlat  # type: ignore
 from typing import Dict, List, Tuple, Optional
 from bs4 import Tag
 from credentials import get_api_credentials
@@ -31,7 +31,7 @@ def get_corpus_data_url() -> str:
     return "https://publicdatafeeds.networkrail.co.uk/ntrod/SupportingFileAuthenticate?type=CORPUS"
 
 
-def extract_gz(gz_path: str, output_path: str):
+def extract_gz(gz_path: str | Path, output_path: str | Path):
     with gzip.open(gz_path, "rb") as f:
         with open(output_path, "wb") as out:
             shutil.copyfileobj(f, out)
@@ -111,7 +111,7 @@ def write_dict_as_json(data: dict, path: str):
         f.write(data_json)
 
 
-def read_json_as_dict(path: str) -> dict:
+def read_json_as_dict(path: str | Path) -> dict:
     with open(path, "r") as f:
         data = f.read()
     return json.loads(data)

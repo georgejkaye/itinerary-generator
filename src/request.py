@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+import json
 from typing import Optional
 from bs4 import BeautifulSoup, ResultSet, Tag
 import requests
@@ -16,6 +16,11 @@ def make_request(
     else:
         auth = None
     return requests.get(url, auth=auth, stream=stream)
+
+
+def get_json(url: str, credentials: Optional[Credentials] = None) -> dict:
+    page = make_request(url, credentials=credentials).json()
+    return json.loads(page)
 
 
 def get_page(url: str, credentials: Optional[Credentials] = None) -> BeautifulSoup:
