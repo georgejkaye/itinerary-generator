@@ -1,4 +1,5 @@
 import csv
+from dataclasses import dataclass
 import gzip
 import json
 import math
@@ -21,6 +22,8 @@ bplan_path = data_directory / "bplan.tsv"
 tiploc_to_crs_path = data_directory / "tiploc-to-crs.json"
 crs_to_tiploc_path = data_directory / "crs-to-tiploc.json"
 station_json_path = data_directory / "stations.json"
+tiploc_lookup_path = data_directory / "tiploc-lookup.json"
+crs_lookup_path = data_directory / "crs-lookup.json"
 
 
 def get_bplan_data_url() -> str:
@@ -46,10 +49,10 @@ def download_binary(url: str, path: str, credentials: Optional[Credentials] = No
         f.write(response.raw.read())
 
 
-def download_corpus(corpus_creds: Credentials):
+def download_corpus(corpus_credentials: Credentials):
     corpus_url = get_corpus_data_url()
     corpus_download_path = "data/corpus.gz"
-    download_binary(corpus_url, corpus_download_path, credentials=corpus_creds)
+    download_binary(corpus_url, corpus_download_path, credentials=corpus_credentials)
     extract_gz(corpus_download_path, corpus_path)
 
 
@@ -105,7 +108,7 @@ def translate_bplan_to_stations(
     return stations
 
 
-def write_dict_as_json(data: dict, path: str):
+def write_dict_as_json(data: dict, path: str | Path):
     data_json = json.dumps(data)
     with open(path, "w") as f:
         f.write(data_json)
@@ -117,7 +120,7 @@ def read_json_as_dict(path: str | Path) -> dict:
     return json.loads(data)
 
 
-def read_tsv_as_list(path: str) -> list:
+def read_tsv_as_list(path: str | Path) -> list:
     rows = []
     with open(path, "r", encoding="ASCII", errors="ignore") as f:
         data = csv.reader(f, delimiter="\t")
@@ -131,7 +134,7 @@ def has_crs(tag: Tag) -> bool:
     return not cells[1].has_attr("class")
 
 
-def write_station_data(stations: List[TrainStation], file: str):
+def write_station_data(stations: List[TrainStation], file: str | Path):
     station_json = TrainStation.schema().dumps(stations, many=True)  # type: ignore
     with open(file, "w") as f:
         f.write(station_json)
@@ -143,12 +146,32 @@ def read_station_data(file: str) -> List[TrainStation]:
     return TrainStation.schema().loads(station_json, many=True)  # type: ignore
 
 
-def write_crs_tiploc_translator(stations: List[TrainStation], file: str):
-    crs_dict = {}
+def get_station_lookups(
+    stations: List[TrainStation],
+) -> Tuple[Dict[str, TrainStation], Dict[str, TrainStation]]:
+    tiploc_lookup = {}
+    crs_lookup = {}
     for stn in stations:
-        crs_dict[stn.crs] = stn.tiploc
+        tiploc_lookup[stn.tiploc] = stn
+        crs_lookup[stn.crs] = stn
+    return (tiploc_lookup, crs_lookup)
+
+
+def write_station_lookup(lookup: Dict[str, TrainStation], file: str | Path):
+    lookup_dict = {}
+    for key in lookup:
+        lookup_dict[key] = lookup[key].to_dict()  # type: ignore
     with open(file, "w") as f:
-        f.write(json.dumps(crs_dict, indent=4))
+        f.write(json.dumps(lookup_dict))
+
+
+def read_tiploc_lookup(file: str) -> Dict[str, TrainStation]:
+    with open(file, "r") as f:
+        data = json.loads(f.read())
+    tiploc_dict = {}
+    for key in data:
+        tiploc_dict[key] = TrainStation.from_dict(data[key])  # type: ignore
+    return tiploc_dict
 
 
 def read_tiploc_crs_translator() -> Dict[str, str]:
@@ -159,14 +182,25 @@ def read_crs_tiploc_translator() -> Dict[str, str]:
     return read_json_as_dict(crs_to_tiploc_path)
 
 
-def setup_data():
+@dataclass
+class Data:
+    stations: List[TrainStation]
+    tiploc_lookup: Dict[str, TrainStation]
+    crs_lookup: Dict[str, TrainStation]
+
+
+def setup_data() -> Data:
     download_corpus(get_api_credentials("NR"))
     corpus = read_json_as_dict(corpus_path)
     (tiploc_to_crs, crs_to_tiploc) = translate_corpus_to_translators(corpus)
     write_dict_as_json(tiploc_to_crs, tiploc_to_crs_path)
     write_dict_as_json(crs_to_tiploc, crs_to_tiploc_path)
+
     download_bplan()
     bplan = read_tsv_as_list(bplan_path)
     stations = translate_bplan_to_stations(bplan, tiploc_to_crs)
-    print(stations)
+    (tiploc_lookup, crs_lookup) = get_station_lookups(stations)
+    write_station_lookup(tiploc_lookup, tiploc_lookup_path)
+    write_station_lookup(crs_lookup, crs_lookup_path)
     write_station_data(stations, station_json_path)
+    return Data(stations, tiploc_lookup, crs_lookup)
