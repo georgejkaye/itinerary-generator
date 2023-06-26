@@ -4,6 +4,7 @@ pyyaml
 dataclasses-json
 python-dotenv
 convertbng
+arrow
 
 types-requests
 types-beautifulsoup4

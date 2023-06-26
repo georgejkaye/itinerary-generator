@@ -1,15 +1,17 @@
 import re
 from typing import List, Optional, Tuple
 from bs4 import BeautifulSoup, Tag
-from datetime import date, datetime, time
+from arrow import Arrow
+import arrow
 
-from bus.structs import BusStop, BusTrip, BusTripSegment, BusTripStop
+from bus.structs import BusStop, BusTrip, BusTripStop
 from request import get_href, get_id, get_page, select_all, select_one
+from structs import Segment
 
 
-def get_bus_stop_url(atco: str, dt: datetime = datetime.now()) -> str:
-    date_string = datetime.strftime(dt, "%Y-%m-%d")
-    time_string = datetime.strftime(dt, "%H%%3A%M")
+def get_bus_stop_url(atco: str, dt: Arrow = arrow.now("Europe/London")) -> str:
+    date_string = dt.format("YYYY-MM-DD")
+    time_string = dt.format("HH%3Amm")
     return f"https://bustimes.org/stops/{atco}?date={date_string}&time={time_string}"
 
 
@@ -25,7 +27,7 @@ def get_bus_service_url(slug: str) -> str:
     return f"https://bustimes.org/services/{slug}"
 
 
-def get_bus_stop_page(atco: str, origin_dt: datetime) -> BeautifulSoup:
+def get_bus_stop_page(atco: str, origin_dt: Arrow) -> BeautifulSoup:
     stop_url = get_bus_stop_url(atco, origin_dt)
     return get_page(stop_url)
 
@@ -118,16 +120,16 @@ def get_bus_service_number_and_slug(trip_page: BeautifulSoup) -> Tuple[str, str]
     return (number, slug)
 
 
-def get_time_from_trip_stop_row(row: Tag, cell_index: int) -> time:
+def get_time_from_trip_stop_row(date: Arrow, row: Tag, cell_index: int) -> Arrow:
     time_text = (
         select_all(row, "td")[cell_index].contents[0].text.replace("\n", "").strip()
     )
     (hours, minutes) = time_text.split(":")
-    return time(hour=int(hours), minute=int(minutes))
+    return arrow.get(date.year, date.month, date.day, int(hours), int(minutes), 0)
 
 
 def get_trip_stop_details(
-    arr_row: Tag, dep_row: Optional[Tag], service_page: BeautifulSoup
+    date: Arrow, arr_row: Tag, dep_row: Optional[Tag], service_page: BeautifulSoup
 ) -> BusTripStop:
     link = select_one(arr_row, "a")
     href = get_href(link)
@@ -140,16 +142,16 @@ def get_trip_stop_details(
     else:
         stop_name = stop_matches.group(1)
         stop_location = stop_matches.group(2)
-    arr_time = get_time_from_trip_stop_row(arr_row, 1)
+    arr_time = get_time_from_trip_stop_row(date, arr_row, 1)
     if dep_row is None:
         dep_time = arr_time
     else:
-        dep_time = get_time_from_trip_stop_row(dep_row, 0)
+        dep_time = get_time_from_trip_stop_row(date, dep_row, 0)
     return BusTripStop(stop_name, stop_location, atco, arr_time, dep_time)
 
 
 def get_trip_stop_details_at_time(
-    trip_page: BeautifulSoup, stop_time: int, service_page: BeautifulSoup
+    trip_page: BeautifulSoup, date: Arrow, stop_time: int, service_page: BeautifulSoup
 ) -> BusTripStop:
     rows = select_all(trip_page, ".trip-timetable tbody tr")
     desired_id = f"stop-time-{stop_time}"
@@ -163,12 +165,12 @@ def get_trip_stop_details_at_time(
                 arr_row = row
                 dep_row = None
     return get_trip_stop_details(
-        arr_row=arr_row, dep_row=dep_row, service_page=service_page
+        date=date, arr_row=arr_row, dep_row=dep_row, service_page=service_page
     )
 
 
 def get_all_trip_stop_details(
-    trip_page: BeautifulSoup, service_page: BeautifulSoup
+    date: Arrow, trip_page: BeautifulSoup, service_page: BeautifulSoup
 ) -> List[BusTripStop]:
     rows = select_all(trip_page, ".trip-timetable tbody tr")
     stop_rows = []
@@ -184,7 +186,7 @@ def get_all_trip_stop_details(
             current_index = current_index + 1
         stop_rows.append((arr_row, dep_row))
     return list(
-        map(lambda r: get_trip_stop_details(r[0], r[1], service_page), stop_rows)
+        map(lambda r: get_trip_stop_details(date, r[0], r[1], service_page), stop_rows)
     )
 
 
@@ -198,20 +200,18 @@ def get_stop_time_from_stop_id(trip_page: BeautifulSoup, stop_id: int) -> Option
     return None
 
 
-def get_bus_trip(id: int) -> BusTrip:
+def get_bus_trip(date: Arrow, id: int) -> BusTrip:
     page = get_bus_trip_page(id)
     (trip_number, trip_slug) = get_bus_service_number_and_slug(page)
     (origin, destination) = get_trip_origin_and_destination(page)
     service_page = get_page(get_bus_service_url(trip_slug))
-    stops = get_all_trip_stop_details(page, service_page)
+    stops = get_all_trip_stop_details(date, page, service_page)
     return BusTrip(
         id, trip_number, trip_slug, origin, destination, stops[0].dep_time, stops
     )
 
 
-def get_bus_trip_segment(
-    trip: BusTrip, board: str, alight: str
-) -> Optional[BusTripSegment]:
+def get_bus_trip_segment(trip: BusTrip, board: str, alight: str) -> Optional[Segment]:
     start = None
     end = None
     for i, stop in enumerate(trip.stops):
@@ -221,21 +221,5 @@ def get_bus_trip_segment(
             if start is None:
                 return None
             end = i
-            start_time = trip.stops[start].dep_time
-            end_time = trip.stops[end].arr_time
-            duration = datetime.combine(date.min, end_time) - datetime.combine(
-                date.min, start_time
-            )
-            board_stop = get_bus_stop(trip.stops[start].atco)
-            alight_stop = get_bus_stop(trip.stops[end].atco)
-            return BusTripSegment(
-                trip,
-                start,
-                board_stop,
-                start_time,
-                end,
-                alight_stop,
-                end_time,
-                duration,
-            )
+            return Segment(trip, start, end)
     return None

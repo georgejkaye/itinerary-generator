@@ -1,8 +1,9 @@
 from jinja2 import Environment, FileSystemLoader, select_autoescape
-from bus.structs import BusTripSegment
+
+from structs import Segment
 
 
-def write_output(trip: BusTripSegment):
+def write_output(trip: Segment):
     template = "templates/index.html"
     env = Environment(
         loader=FileSystemLoader("templates"), autoescape=select_autoescape()

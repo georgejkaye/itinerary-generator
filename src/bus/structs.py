@@ -1,16 +1,36 @@
 from dataclasses import dataclass
 from datetime import time, timedelta
-from typing import List, Optional
+from typing import List, Optional, Sequence, Tuple
+
+from arrow import Arrow
+from bus.scrapers import get_bus_service_url, get_bus_stop_url, get_bus_trip_url
+
+from structs import ServiceInterface, StopInterface, TripInterface, TripStopInterface
 
 
 @dataclass
-class BusStop:
+class BusStop(StopInterface):
     name: str
     location: Optional[str]
     lat: float
     lon: float
     naptan: Optional[str]
     atco: str
+
+    def get_name(self) -> str:
+        return f"{self.name} ({self.location})"
+
+    def get_url(self) -> str:
+        return get_bus_stop_url(self.atco)
+
+    def get_latlon(self) -> Tuple[float, float]:
+        return (self.lat, self.lon)
+
+    def get_location(self) -> Optional[str]:
+        return self.location
+
+    def get_identifiers(self):
+        return {"naptan": self.naptan, "atco": self.atco}
 
 
 @dataclass
@@ -20,78 +40,91 @@ class BusStopWindow:
 
 
 @dataclass
-class BusService:
-    name: str
+# class BusService(ServiceInterface[BusStop]):
+class BusService(ServiceInterface):
+    number: str
     slug: str
     origin: str
     destination: str
     operator: str
     colour: Optional[str]
 
+    def get_identifier(self) -> str:
+        return self.number
 
-def get_short_time_string(t: time) -> str:
-    return time.strftime(t, "%H%M")
+    def get_name(self) -> str:
+        return f"{self.origin} - {self.destination}"
+
+    def get_url(self) -> str:
+        return get_bus_service_url(self.slug)
+
+    def get_origins(self) -> List[str]:
+        return [self.origin]
+
+    def get_destinations(self) -> List[str]:
+        return [self.destination]
+
+    def get_operator(self) -> str:
+        return self.operator
+
+    def get_colour(self) -> Optional[str]:
+        return self.colour
 
 
 @dataclass
-class BusTripStop:
+# class BusTripStop(TripStopInterface[BusStop]):
+class BusTripStop(TripStopInterface):
     name: str
     location: Optional[str]
     atco: str
-    arr_time: time
-    dep_time: time
+    arr_time: Arrow
+    dep_time: Arrow
 
-    def get_arr_time_string(self) -> str:
-        return get_short_time_string(self.arr_time)
+    def get_name(self) -> str:
+        return self.name
 
-    def get_dep_time_string(self) -> str:
-        return get_short_time_string(self.dep_time)
+    def get_location(self) -> Optional[str]:
+        return self.location
+
+    def get_url(self) -> str:
+        return get_bus_stop_url(self.atco, dt=self.dep_time)
+
+    def get_arr_time(self) -> Arrow:
+        return self.arr_time
+
+    def get_dep_time(self) -> Arrow:
+        return self.dep_time
 
 
 @dataclass
-class BusTrip:
+# class BusTrip(TripInterface[BusStop]):
+class BusTrip(TripInterface):
     id: int
-    service: str
-    service_slug: str
+    number: str
+    slug: str
     origin: str
     destination: str
-    start_time: time
+    start_time: Arrow
     stops: List[BusTripStop]
 
+    def get_name(self) -> str:
+        start_time_string = self.start_time.format("HHmm")
+        return f"{start_time_string} {self.number} {self.origin} - {self.destination}"
 
-def get_duration_string(d: timedelta) -> str:
-    seconds = d.seconds
-    hours = int(seconds / 3600)
-    minutes = int((seconds % 3600) / 60)
-    if hours > 0:
-        hour_string = f"{hours}h"
-    else:
-        hour_string = ""
-    return f"{hour_string}{minutes}m"
+    def get_start_datetime(self) -> Arrow:
+        return self.start_time
 
+    def get_url(self) -> str:
+        return get_bus_trip_url(self.id)
 
-@dataclass
-class BusTripSegment:
-    trip: BusTrip
-    board_index: int
-    board: BusStop
-    board_time: time
-    alight_index: int
-    alight: BusStop
-    alight_time: time
-    duration: timedelta
+    def get_service_url(self) -> str:
+        return get_bus_service_url(self.slug)
 
-    def get_segment_stops(self) -> List[BusTripStop]:
-        return self.trip.stops[self.board_index : self.alight_index + 1]
+    def get_origins(self) -> List[str]:
+        return [self.origin]
 
-    def get_intermediate_stops(self) -> List[BusTripStop]:
-        return self.trip.stops[self.board_index + 1 : self.alight_index]
+    def get_destinations(self) -> List[str]:
+        return [self.destination]
 
-    def get_duration_string(self) -> str:
-        return get_duration_string(self.duration)
-
-    def get_board_time_string(self) -> str:
-        return get_short_time_string(self.board_time)
-
-    def get_alight_time_string(self) -> str:
-        return get_short_time_string(self.alight_time)
+    def get_stops(self) -> Sequence[BusTripStop]:
+        return self.stops
