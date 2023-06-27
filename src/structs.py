@@ -160,6 +160,11 @@ class TripInterface:
         """Get a list of stops this trip makes"""
         pass
 
+    @abstractmethod
+    def get_operator(self) -> str:
+        """Get the name of the operator of this service"""
+        pass
+
 
 @dataclass
 # class Segment[T]:

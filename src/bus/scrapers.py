@@ -183,14 +183,27 @@ def get_stop_time_from_stop_id(trip_page: BeautifulSoup, stop_id: int) -> Option
     return None
 
 
+def get_operator(trip_page: BeautifulSoup) -> str:
+    breadcrumbs = select_all(select_one(trip_page, "ol"), "li")
+    return select_one(breadcrumbs[1], "span").text
+
+
 def get_bus_trip(date: Arrow, id: int) -> BusTrip:
     page = get_bus_trip_page(id)
     (trip_number, trip_slug) = get_bus_service_number_and_slug(page)
     (origin, destination) = get_trip_origin_and_destination(page)
     service_page = get_page(get_bus_service_url(trip_slug))
     stops = get_all_trip_stop_details(date, page, service_page)
+    operator = get_operator(page)
     return BusTrip(
-        id, trip_number, trip_slug, origin, destination, stops[0].dep_time, stops
+        id,
+        trip_number,
+        trip_slug,
+        origin,
+        destination,
+        stops[0].dep_time,
+        stops,
+        operator,
     )
 
 
@@ -206,15 +219,3 @@ def get_bus_trip_segment(trip: BusTrip, board: str, alight: str) -> Optional[Seg
             end = i
             return Segment(trip, start, end)
     return None
-
-
-def parse_bus_segment(item: dict) -> Segment:
-    date = arrow.get(item["date"])
-    id = int(item["id"])
-    board = item["board"]
-    alight = item["alight"]
-    trip = get_bus_trip(date, id)
-    segment = get_bus_trip_segment(trip, board, alight)
-    if segment is None:
-        raise RuntimeError("Not a valid segment")
-    return segment

@@ -19,6 +19,13 @@
     </tr>
     <tr>
         <td>
+            <span style="border: 1pt solid black; padding: 2px 5px; margin-right: 10px">
+                {{ segment.trip.get_operator() }}
+            </span>
+        </td>
+    </tr>
+    <tr>
+        <td>
             <div style="font-size: 1.5em">
                 <a href="https://bustimes.org/stops/{{ segment.get_board_stop().atco }}">
                     {{ segment.get_board_stop().get_name() }}

@@ -111,6 +111,7 @@ class BusTrip(TripInterface):
     destination: str
     start_time: Arrow
     stops: List[BusTripStop]
+    operator: str
 
     def get_identifier(self) -> str:
         return self.number
@@ -135,3 +136,6 @@ class BusTrip(TripInterface):
 
     def get_stops(self) -> Sequence[BusTripStop]:
         return self.stops
+
+    def get_operator(self) -> str:
+        return self.operator
