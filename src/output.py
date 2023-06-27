@@ -22,7 +22,7 @@ def hours_minutes(input: timedelta):
     return get_duration_string(input)
 
 
-def write_output(trip: Segment):
+def write_output(segments: List[Segment]):
     env = Environment(
         loader=FileSystemLoader("templates"), autoescape=select_autoescape()
     )
@@ -34,6 +34,6 @@ def write_output(trip: Segment):
         "hours_minutes": hours_minutes,
     }
     index = env.get_template("index.html")
-    html = index.render(trip=trip)
+    html = index.render(segments=segments)
     with open("output.html", "w") as file:
         file.write(html)

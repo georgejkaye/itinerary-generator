@@ -1,7 +1,9 @@
-{% import 'bus.html' as bus %}
+{% import 'segment.html' as seg %}
 <!DOCTYPE html>
 <meta charset="UTF-8">
     <body>
-        {{- bus.bus(trip) -}}
+        {% for segment in segments %}
+        {{- seg.seg(segment) -}}
+        {% endfor %}
     </body>
 </html>
