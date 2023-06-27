@@ -46,7 +46,7 @@ class ServiceInterface:
     """Interface for a service that calls at stops of type T"""
 
     @abstractmethod
-    def get_identifer(self) -> Optional[str]:
+    def get_identifier(self) -> Optional[str]:
         """Get the short identifier of this service, such as the service number"""
         pass
 
@@ -85,6 +85,10 @@ class TripStopInterface:
         pass
 
     @abstractmethod
+    def get_identifier(self) -> str:
+        pass
+
+    @abstractmethod
     def get_location(self) -> Optional[str]:
         pass
 
@@ -93,18 +97,24 @@ class TripStopInterface:
         pass
 
     @abstractmethod
-    def get_arr_time(self) -> Arrow:
+    def get_arr_time(self) -> Optional[Arrow]:
         pass
 
-    def get_arr_time_string(self) -> str:
-        return self.get_arr_time().format("HH:mm")
+    def get_arr_time_string(self) -> Optional[str]:
+        arr_time = self.get_arr_time()
+        if arr_time is None:
+            return None
+        return arr_time.format("HH:mm")
 
     @abstractmethod
-    def get_dep_time(self) -> Arrow:
+    def get_dep_time(self) -> Optional[Arrow]:
         pass
 
-    def get_dep_time_string(self) -> str:
-        return self.get_dep_time().format("HH:mm")
+    def get_dep_time_string(self) -> Optional[str]:
+        dep_time = self.get_dep_time()
+        if dep_time is None:
+            return None
+        return dep_time.format("HH:mm")
 
 
 # class TripStopInterface[T]:
@@ -183,7 +193,10 @@ class Segment:
         return self.get_segment_stops()[0]
 
     def get_board_time(self) -> Arrow:
-        return self.get_board_stop().get_dep_time()
+        dep_time = self.get_board_stop().get_dep_time()
+        if dep_time is None:
+            raise RuntimeError("Never boarded service")
+        return dep_time
 
     def get_board_time_string(self) -> str:
         return get_short_time_string(self.get_board_time())
@@ -197,7 +210,10 @@ class Segment:
         return self.get_segment_stops()[-1]
 
     def get_alight_time(self) -> Arrow:
-        return self.get_alight_stop().get_arr_time()
+        arr_time = self.get_alight_stop().get_arr_time()
+        if arr_time is None:
+            raise RuntimeError("Never alighted service")
+        return arr_time
 
     def get_alight_time_string(self) -> str:
         return get_short_time_string(self.get_alight_time())
@@ -210,6 +226,20 @@ class Segment:
 
     def get_duration_string(self) -> str:
         return get_duration_string(self.get_duration())
+
+
+def get_segment(trip: TripInterface, board: str, alight: str) -> Optional[Segment]:
+    start = None
+    end = None
+    for i, stop in enumerate(trip.get_stops()):
+        if stop.get_identifier() == str(board):
+            start = i
+        elif stop.get_identifier() == str(alight):
+            if start is None:
+                return None
+            end = i
+            return Segment(trip, start, end)
+    return None
 
 
 def get_short_time_string(t: Arrow) -> str:
