@@ -1,18 +1,18 @@
-{%- macro bus(trip) -%}
+{%- macro bus(segment) -%}
 <table>
     <tr>
         <td>
             <div style="display: flex; align-items: center;">
                 <div style="font-size: 1.5em; font-weight: bold; border: 1pt solid black; padding: 2px 5px; margin-right: 10px">
-                    <a href="https://bustimes.org/services/{{ trip.trip.service_slug }}">
-                        {{ trip.trip.service }}
+                    <a href="{{ segment.trip.get_url() }}">
+                        {{ segment.trip.get_identifier() }}
                     </a>
                 </div>
                 <div style="font-size: 1.5em; font-weight: bold; margin-right: 10px">
-                    {{ trip.trip.destination }}
+                    {{ segment.trip.get_destinations() | ampersand }}
                 </div>
                 <div style="font-style: italic; color: gray">
-                    {{ trip.get_segment_stops() | length }} stops, {{ trip.get_duration_string() }}
+                    {{ segment.get_segment_stops() | length }} stops, {{ segment.get_duration() | hours_minutes }}
                 </div>
             </div>
         </td>
@@ -20,54 +20,54 @@
     <tr>
         <td>
             <div style="font-size: 1.5em">
-                <a href="https://bustimes.org/stops/{{ trip.board.atco }}">
-                    {{ trip.board.name }}
+                <a href="https://bustimes.org/stops/{{ segment.get_board_stop().atco }}">
+                    {{ segment.get_board_stop().get_name() }}
                 </a>
             </div>
-            {% if trip.board.location is not none %}
+            {% if segment.get_board_stop().get_location() is not none %}
                 <div style="font-style: italic; color: gray">
-                    {{ trip.board.location }}
+                    {{ segment.get_board_stop().get_location() }}
                 </div>
             {% endif %}
         </td>
         <td style="font-size: 1.5em; font-weight: bold">
-            {{ trip.get_board_time_string() }}
+            {{ segment.get_board_time() | colon_time }}
         </td>
     </tr>
-    {% for stop in trip.get_intermediate_stops() %}
+    {% for stop in segment.get_intermediate_stops() %}
         <tr>
             <td>
                 - <a href="https://bustimes.org/stops/{{ stop.atco }}">
-                    {{ stop.name -}}
+                    {{ stop.get_name() -}}
                 </a>
-                {% if stop.location is not none %}
-                    <span style="font-style: italic; color: gray">{{ stop.location }}</span>
+                {% if stop.get_location() is not none %}
+                    <span style="font-style: italic; color: gray">{{ stop.get_location() }}</span>
                 {% endif %}
             </td>
             <td>
-                {% if stop.get_dep_time_string() != stop.get_arr_time_string() %}
-                    <div>{{ stop.get_arr_time_string() }}<b>a</b></div>
-                    <div>{{ stop.get_dep_time_string() }}<b>d</b></div>
+                {% if stop.get_dep_time() != stop.get_arr_time() %}
+                    <div>{{ stop.get_arr_time() | colon_time }}<b>a</b></div>
+                    <div>{{ stop.get_dep_time() | colon_time }}<b>d</b></div>
                 {% else %}
-                    <div>{{ stop.get_arr_time_string() }}</div>
+                    <div>{{ stop.get_arr_time() | colon_time }}</div>
                 {% endif %}
             </td>
         </tr>
     {% endfor %}
     <tr><td>
         <div style="font-size: 1.5em">
-            <a href="https://bustimes.org/stops/{{ trip.alight.atco }}">
-                {{ trip.alight.name }}
+            <a href="https://bustimes.org/stops/{{ segment.get_alight_stop().atco }}">
+                {{ segment.get_alight_stop().get_name() }}
             </a>
         </div>
-        {% if trip.board.location is not none %}
+        {% if segment.get_board_stop().get_location() is not none %}
             <div style="font-style: italic; color: gray">
-                {{ trip.alight.location }}
+                {{ segment.get_alight_stop().get_location() }}
             </div>
         {% endif %}
     </td>
     <td style="font-size: 1.5em; font-weight: bold">
-        {{ trip.get_alight_time_string() }}
+        {{ segment.get_alight_time() | colon_time }}
     </td></tr>
 </table>
 {% endmacro %}

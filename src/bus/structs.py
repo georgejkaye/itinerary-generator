@@ -1,11 +1,16 @@
 from dataclasses import dataclass
-from datetime import time, timedelta
 from typing import List, Optional, Sequence, Tuple
-
 from arrow import Arrow
-from bus.scrapers import get_bus_service_url, get_bus_stop_url, get_bus_trip_url
+import arrow
+from bus.urls import get_bus_service_url, get_bus_stop_url, get_bus_trip_url
 
-from structs import ServiceInterface, StopInterface, TripInterface, TripStopInterface
+from structs import (
+    Segment,
+    ServiceInterface,
+    StopInterface,
+    TripInterface,
+    TripStopInterface,
+)
 
 
 @dataclass
@@ -36,7 +41,7 @@ class BusStop(StopInterface):
 @dataclass
 class BusStopWindow:
     stop: BusStop
-    time: time
+    time: Arrow
 
 
 @dataclass
@@ -107,9 +112,11 @@ class BusTrip(TripInterface):
     start_time: Arrow
     stops: List[BusTripStop]
 
+    def get_identifier(self) -> str:
+        return self.number
+
     def get_name(self) -> str:
-        start_time_string = self.start_time.format("HHmm")
-        return f"{start_time_string} {self.number} {self.origin} - {self.destination}"
+        return f"{self.origin} - {self.destination}"
 
     def get_start_datetime(self) -> Arrow:
         return self.start_time

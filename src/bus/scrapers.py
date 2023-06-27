@@ -5,26 +5,9 @@ from arrow import Arrow
 import arrow
 
 from bus.structs import BusStop, BusTrip, BusTripStop
+from bus.urls import get_bus_service_url, get_bus_stop_url, get_bus_trip_url
 from request import get_href, get_id, get_page, select_all, select_one
 from structs import Segment
-
-
-def get_bus_stop_url(atco: str, dt: Arrow = arrow.now("Europe/London")) -> str:
-    date_string = dt.format("YYYY-MM-DD")
-    time_string = dt.format("HH%3Amm")
-    return f"https://bustimes.org/stops/{atco}?date={date_string}&time={time_string}"
-
-
-def get_bus_trip_url(id: int, stop_time: Optional[int] = None) -> str:
-    if stop_time:
-        stop_time_string = "#stop-time-{stop_time}"
-    else:
-        stop_time_string = ""
-    return f"https://bustimes.org/trips/{id}{stop_time_string}"
-
-
-def get_bus_service_url(slug: str) -> str:
-    return f"https://bustimes.org/services/{slug}"
 
 
 def get_bus_stop_page(atco: str, origin_dt: Arrow) -> BeautifulSoup:
@@ -93,7 +76,7 @@ def get_bus_number(trip_page: BeautifulSoup) -> str:
 
 def get_trip_origin_and_destination(trip_page: BeautifulSoup) -> Tuple[str, str]:
     result = select_one(trip_page, "h2")
-    result_text = result.text
+    result_text = result.text.replace("\n", "")
     first_hyphen = result_text.replace("\n", "").find("-")
     route = result_text[first_hyphen + 1 :]
     route_split = route.split(" to ")
@@ -223,3 +206,15 @@ def get_bus_trip_segment(trip: BusTrip, board: str, alight: str) -> Optional[Seg
             end = i
             return Segment(trip, start, end)
     return None
+
+
+def parse_bus_segment(item: dict) -> Segment:
+    date = arrow.get(item["date"])
+    id = int(item["id"])
+    board = item["board"]
+    alight = item["alight"]
+    trip = get_bus_trip(date, id)
+    segment = get_bus_trip_segment(trip, board, alight)
+    if segment is None:
+        raise RuntimeError("Not a valid segment")
+    return segment
