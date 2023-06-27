@@ -7,7 +7,6 @@ import arrow
 from bus.structs import BusStop, BusTrip, BusTripStop
 from bus.urls import get_bus_service_url, get_bus_stop_url, get_bus_trip_url
 from request import get_href, get_id, get_page, select_all, select_one
-from structs import Segment
 
 
 def get_bus_stop_page(atco: str, origin_dt: Arrow) -> BeautifulSoup:
@@ -205,17 +204,3 @@ def get_bus_trip(date: Arrow, id: int) -> BusTrip:
         stops,
         operator,
     )
-
-
-def get_bus_trip_segment(trip: BusTrip, board: str, alight: str) -> Optional[Segment]:
-    start = None
-    end = None
-    for i, stop in enumerate(trip.stops):
-        if stop.atco == str(board):
-            start = i
-        elif stop.atco == str(alight):
-            if start is None:
-                return None
-            end = i
-            return Segment(trip, start, end)
-    return None

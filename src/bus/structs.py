@@ -88,6 +88,9 @@ class BusTripStop(TripStopInterface):
     def get_name(self) -> str:
         return self.name
 
+    def get_identifier(self) -> str:
+        return self.atco
+
     def get_location(self) -> Optional[str]:
         return self.location
 
