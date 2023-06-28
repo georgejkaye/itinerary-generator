@@ -99,29 +99,30 @@ def get_time_from_trip_stop_row(date: Arrow, row: Tag, cell_index: int) -> Arrow
 
 
 def get_trip_stop_details(
-    date: Arrow, arr_row: Tag, dep_row: Optional[Tag], service_page: BeautifulSoup
+    date: Arrow,
+    arr_row: Tag,
+    dep_row: Optional[Tag],
+    service_page: BeautifulSoup,
+    lookup: Dict[str, BusStop],
 ) -> BusTripStop:
     link = select_one(arr_row, "a")
     href = get_href(link)
     atco = href.split("/")[2]
-    full_stop_name = get_full_stop_name_from_service_page(service_page, atco)
-    stop_matches = re.match(bracket_regex, full_stop_name)
-    if stop_matches is None:
-        stop_name = full_stop_name
-        stop_location = None
-    else:
-        stop_name = stop_matches.group(1)
-        stop_location = stop_matches.group(2)
+    stop = get_bus_stop(atco, lookup)
     arr_time = get_time_from_trip_stop_row(date, arr_row, 1)
     if dep_row is None:
         dep_time = arr_time
     else:
         dep_time = get_time_from_trip_stop_row(date, dep_row, 0)
-    return BusTripStop(stop_name, stop_location, atco, arr_time, dep_time)
+    return BusTripStop(stop, arr_time, dep_time)
 
 
 def get_trip_stop_details_at_time(
-    trip_page: BeautifulSoup, date: Arrow, stop_time: int, service_page: BeautifulSoup
+    trip_page: BeautifulSoup,
+    date: Arrow,
+    stop_time: int,
+    service_page: BeautifulSoup,
+    lookup: Dict[str, BusStop],
 ) -> BusTripStop:
     rows = select_all(trip_page, ".trip-timetable tbody tr")
     desired_id = f"stop-time-{stop_time}"
@@ -135,12 +136,19 @@ def get_trip_stop_details_at_time(
                 arr_row = row
                 dep_row = None
     return get_trip_stop_details(
-        date=date, arr_row=arr_row, dep_row=dep_row, service_page=service_page
+        date=date,
+        arr_row=arr_row,
+        dep_row=dep_row,
+        service_page=service_page,
+        lookup=lookup,
     )
 
 
 def get_all_trip_stop_details(
-    date: Arrow, trip_page: BeautifulSoup, service_page: BeautifulSoup
+    date: Arrow,
+    trip_page: BeautifulSoup,
+    service_page: BeautifulSoup,
+    lookup: Dict[str, BusStop],
 ) -> List[BusTripStop]:
     rows = select_all(trip_page, ".trip-timetable tbody tr")
     stop_rows = []
@@ -156,7 +164,10 @@ def get_all_trip_stop_details(
             current_index = current_index + 1
         stop_rows.append((arr_row, dep_row))
     return list(
-        map(lambda r: get_trip_stop_details(date, r[0], r[1], service_page), stop_rows)
+        map(
+            lambda r: get_trip_stop_details(date, r[0], r[1], service_page, lookup),
+            stop_rows,
+        )
     )
 
 
@@ -175,12 +186,12 @@ def get_operator(trip_page: BeautifulSoup) -> str:
     return select_one(breadcrumbs[1], "span").text
 
 
-def get_bus_trip(date: Arrow, id: int) -> BusTrip:
+def get_bus_trip(date: Arrow, id: int, lookup: Dict[str, BusStop]) -> BusTrip:
     page = get_bus_trip_page(id)
     (trip_number, trip_slug) = get_bus_service_number_and_slug(page)
     (origin, destination) = get_trip_origin_and_destination(page)
     service_page = get_page(get_bus_service_url(trip_slug))
-    stops = get_all_trip_stop_details(date, page, service_page)
+    stops = get_all_trip_stop_details(date, page, service_page, lookup)
     operator = get_operator(page)
     return BusTrip(
         id,

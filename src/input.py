@@ -2,18 +2,19 @@ from typing import Dict
 
 import arrow
 from bus.scrapers import get_bus_trip
+from bus.structs import BusStop
 from credentials import Credentials
 from structs import Segment, get_segment
 from train.scrapers import make_train_service
 from train.structs import TrainService, TrainStation
 
 
-def parse_bus_element(item: dict) -> Segment:
+def parse_bus_element(item: dict, lookup: Dict[str, BusStop]) -> Segment:
     date = arrow.get(item["date"])
     id = int(item["id"])
     board = item["board"]
     alight = item["alight"]
-    trip = get_bus_trip(date, id)
+    trip = get_bus_trip(date, id, lookup)
     segment = get_segment(trip, board, alight)
     if segment is None:
         raise RuntimeError("Not a valid segment")

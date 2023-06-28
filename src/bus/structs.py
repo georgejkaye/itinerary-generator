@@ -82,23 +82,21 @@ class BusService(ServiceInterface):
 @dataclass
 # class BusTripStop(TripStopInterface[BusStop]):
 class BusTripStop(TripStopInterface):
-    name: str
-    location: Optional[str]
-    atco: str
+    stop: BusStop
     arr_time: Arrow
     dep_time: Arrow
 
     def get_name(self) -> str:
-        return self.name
+        return self.stop.name
 
     def get_identifier(self) -> str:
-        return self.atco
+        return self.stop.atco
 
     def get_location(self) -> Optional[str]:
-        return self.location
+        return self.stop.indicator
 
     def get_url(self) -> str:
-        return get_bus_stop_url(self.atco, dt=self.dep_time)
+        return get_bus_stop_url(self.stop.atco, dt=self.dep_time)
 
     def get_arr_time(self) -> Arrow:
         return self.arr_time
