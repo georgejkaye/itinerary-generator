@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 import json
+import os
 from pathlib import Path
 from typing import Dict, List
 from bus.structs import BusStop
@@ -91,10 +92,19 @@ def write_bus_stop_data(stops: List[BusStop], file: str | Path):
         f.write(stop_json)
 
 
-def read_station_data(file: str) -> List[BusStop]:
+def read_stop_data(file: str | Path) -> List[BusStop]:
     with open(file, "r") as f:
         stop_json = f.read()
     return BusStop.schema().loads(stop_json, many=True)  # type: ignore
+
+
+def read_stop_lookup(file: str | Path) -> Dict[str, BusStop]:
+    with open(file, "r") as f:
+        data = json.loads(f.read())
+    stop_dict = {}
+    for key in data:
+        stop_dict[key] = BusStop.from_dict(data[key])  # type: ignore
+    return stop_dict
 
 
 @dataclass
@@ -104,9 +114,16 @@ class BusData:
 
 
 def setup_bus_data() -> BusData:
-    download_naptan()
+    if not os.path.isfile(naptan_path):
+        download_naptan()
     stops = read_naptan()
     lookup = get_stop_lookup(stops)
     write_bus_stop_data(stops, bus_stop_path)
     write_lookup(lookup, atco_lookup_path)
+    return BusData(stops, lookup)
+
+
+def read_bus_data() -> BusData:
+    stops = read_stop_data(bus_stop_path)
+    lookup = read_stop_lookup(atco_lookup_path)
     return BusData(stops, lookup)

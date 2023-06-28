@@ -2,6 +2,7 @@ import csv
 from dataclasses import dataclass
 import json
 import math
+import os
 from pathlib import Path
 from convertbng.util import convert_lonlat  # type: ignore
 from typing import Dict, List, Tuple, Optional
@@ -76,11 +77,11 @@ def translate_bplan_to_stations(
                     (lons, lats) = convert_lonlat([east], [north])
                     (lon, lat) = (lons[0], lats[0])
                     if math.isnan(lon):
-                        lon = None
+                        continue
                     if math.isnan(lat):
-                        lat = None
+                        continue
                 else:
-                    (lon, lat) = (None, None)
+                    continue
                 station = TrainStation(name, crs, tiploc, lat, lon)
                 stations.append(station)
         elif found_locs:
@@ -120,7 +121,7 @@ def write_station_data(stations: List[TrainStation], file: str | Path):
         f.write(station_json)
 
 
-def read_station_data(file: str) -> List[TrainStation]:
+def read_station_data(file: str | Path) -> List[TrainStation]:
     with open(file, "r") as f:
         station_json = f.read()
     return TrainStation.schema().loads(station_json, many=True)  # type: ignore
@@ -137,13 +138,13 @@ def get_station_lookups(
     return (tiploc_lookup, crs_lookup)
 
 
-def read_tiploc_lookup(file: str) -> Dict[str, TrainStation]:
+def read_station_lookup(file: str | Path) -> Dict[str, TrainStation]:
     with open(file, "r") as f:
         data = json.loads(f.read())
-    tiploc_dict = {}
+    station_dict = {}
     for key in data:
-        tiploc_dict[key] = TrainStation.from_dict(data[key])  # type: ignore
-    return tiploc_dict
+        station_dict[key] = TrainStation.from_dict(data[key])  # type: ignore
+    return station_dict
 
 
 def read_tiploc_crs_translator() -> Dict[str, str]:
@@ -162,17 +163,27 @@ class TrainData:
 
 
 def setup_train_data() -> TrainData:
-    download_corpus(get_api_credentials("NR"))
+    if not os.path.isfile(corpus_path):
+        download_corpus(get_api_credentials("NR"))
+
+    if not os.path.isfile(bplan_path):
+        download_bplan()
+
     corpus = read_json_as_dict(corpus_path)
     (tiploc_to_crs, crs_to_tiploc) = translate_corpus_to_translators(corpus)
     write_dict_as_json(tiploc_to_crs, tiploc_to_crs_path)
     write_dict_as_json(crs_to_tiploc, crs_to_tiploc_path)
-
-    download_bplan()
     bplan = read_tsv_as_list(bplan_path)
     stations = translate_bplan_to_stations(bplan, tiploc_to_crs)
     (tiploc_lookup, crs_lookup) = get_station_lookups(stations)
     write_lookup(tiploc_lookup, tiploc_lookup_path)
     write_lookup(crs_lookup, crs_lookup_path)
     write_station_data(stations, station_json_path)
+    return TrainData(stations, tiploc_lookup, crs_lookup)
+
+
+def read_train_data() -> TrainData:
+    stations = read_station_data(station_json_path)
+    tiploc_lookup = read_station_lookup(tiploc_lookup_path)
+    crs_lookup = read_station_lookup(crs_lookup_path)
     return TrainData(stations, tiploc_lookup, crs_lookup)
