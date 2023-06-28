@@ -18,13 +18,13 @@ class StopInterface:
         """Get the url of an appropriate page for this stop"""
 
     @abstractmethod
-    def get_latlon(self) -> Tuple[float, float]:
+    def get_latlon(self) -> Tuple[Optional[float], Optional[float]]:
         pass
 
-    def get_lat(self) -> float:
+    def get_lat(self) -> Optional[float]:
         return self.get_latlon()[0]
 
-    def get_lon(self) -> float:
+    def get_lon(self) -> Optional[float]:
         return self.get_latlon()[1]
 
     @abstractmethod

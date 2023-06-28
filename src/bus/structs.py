@@ -26,12 +26,12 @@ class BusStop(StopInterface):
     atco: str
 
     def get_name(self) -> str:
-        return f"{self.name} ({self.indicator})"
+        return f"{self.name}"
 
     def get_url(self) -> str:
         return get_bus_stop_url(self.atco)
 
-    def get_latlon(self) -> Tuple[float, float]:
+    def get_latlon(self) -> Tuple[Optional[float], Optional[float]]:
         return (self.lat, self.lon)
 
     def get_location(self) -> Optional[str]:

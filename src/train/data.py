@@ -77,11 +77,11 @@ def translate_bplan_to_stations(
                     (lons, lats) = convert_lonlat([east], [north])
                     (lon, lat) = (lons[0], lats[0])
                     if math.isnan(lon):
-                        continue
+                        lon = None
                     if math.isnan(lat):
-                        continue
+                        lat = None
                 else:
-                    continue
+                    (lon, lat) = (None, None)
                 station = TrainStation(name, crs, tiploc, lat, lon)
                 stations.append(station)
         elif found_locs:

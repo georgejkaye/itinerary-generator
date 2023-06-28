@@ -14,8 +14,8 @@ class TrainStation:
     name: str
     crs: str
     tiploc: str
-    lat: float
-    lon: float
+    lat: Optional[float]
+    lon: Optional[float]
 
 
 @dataclass
@@ -29,7 +29,7 @@ class TrainStop(StopInterface):
     def get_url(self) -> str:
         return get_train_station_url(self.station.crs)
 
-    def get_latlon(self) -> Tuple[float, float]:
+    def get_latlon(self) -> Tuple[Optional[float], Optional[float]]:
         return (self.station.lat, self.station.lon)
 
     def get_location(self) -> Optional[str]:
