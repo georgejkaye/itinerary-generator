@@ -27,7 +27,7 @@
     <tr>
         <td>
             <div style="font-size: 1.5em">
-                <a href="https://bustimes.org/stops/{{ segment.get_board_stop().atco }}">
+                <a href="{{ segment.get_board_stop().get_url() }}">
                     {{ segment.get_board_stop().get_name() }}
                 </a>
             </div>
@@ -44,7 +44,7 @@
     {% for stop in segment.get_intermediate_stops() %}
         <tr>
             <td>
-                - <a href="https://bustimes.org/stops/{{ stop.atco }}">
+                - <a href="{{ stop.get_url() }}">
                     {{ stop.get_name() -}}
                 </a>
                 {% if stop.get_location() is not none %}
@@ -63,7 +63,7 @@
     {% endfor %}
     <tr><td>
         <div style="font-size: 1.5em">
-            <a href="https://bustimes.org/stops/{{ segment.get_alight_stop().atco }}">
+            <a href="{{ segment.get_alight_stop().get_url() }}">
                 {{ segment.get_alight_stop().get_name() }}
             </a>
         </div>
