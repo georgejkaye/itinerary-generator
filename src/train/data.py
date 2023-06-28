@@ -1,27 +1,22 @@
 import csv
 from dataclasses import dataclass
-import gzip
 import json
 import math
-import os
 from pathlib import Path
-import shutil
-import chardet
 from convertbng.util import convert_lonlat  # type: ignore
 from typing import Dict, List, Tuple, Optional
 from bs4 import Tag
 from credentials import get_api_credentials
-
+from data import download_binary, extract_gz, data_directory, write_lookup
 
 from request import Credentials, get_page, make_request, select_all, select_one
 from train.structs import TrainStation
 
-data_directory = Path("data")
 corpus_path = data_directory / "corpus.json"
 bplan_path = data_directory / "bplan.tsv"
 tiploc_to_crs_path = data_directory / "tiploc-to-crs.json"
 crs_to_tiploc_path = data_directory / "crs-to-tiploc.json"
-station_json_path = data_directory / "stations.json"
+station_json_path = data_directory / "train-stations.json"
 tiploc_lookup_path = data_directory / "tiploc-lookup.json"
 crs_lookup_path = data_directory / "crs-lookup.json"
 
@@ -32,21 +27,6 @@ def get_bplan_data_url() -> str:
 
 def get_corpus_data_url() -> str:
     return "https://publicdatafeeds.networkrail.co.uk/ntrod/SupportingFileAuthenticate?type=CORPUS"
-
-
-def extract_gz(gz_path: str | Path, output_path: str | Path):
-    with gzip.open(gz_path, "rb") as f:
-        with open(output_path, "wb") as out:
-            shutil.copyfileobj(f, out)
-    os.remove(gz_path)
-
-
-def download_binary(url: str, path: str, credentials: Optional[Credentials] = None):
-    response = make_request(url, credentials=credentials, stream=True)
-    if response.status_code != 200:
-        raise RuntimeError("Could not get CORPUS")
-    with open(path, "wb") as f:
-        f.write(response.raw.read())
 
 
 def download_corpus(corpus_credentials: Credentials):
@@ -157,14 +137,6 @@ def get_station_lookups(
     return (tiploc_lookup, crs_lookup)
 
 
-def write_station_lookup(lookup: Dict[str, TrainStation], file: str | Path):
-    lookup_dict = {}
-    for key in lookup:
-        lookup_dict[key] = lookup[key].to_dict()  # type: ignore
-    with open(file, "w") as f:
-        f.write(json.dumps(lookup_dict))
-
-
 def read_tiploc_lookup(file: str) -> Dict[str, TrainStation]:
     with open(file, "r") as f:
         data = json.loads(f.read())
@@ -183,13 +155,13 @@ def read_crs_tiploc_translator() -> Dict[str, str]:
 
 
 @dataclass
-class Data:
+class TrainData:
     stations: List[TrainStation]
     tiploc_lookup: Dict[str, TrainStation]
     crs_lookup: Dict[str, TrainStation]
 
 
-def setup_data() -> Data:
+def setup_train_data() -> TrainData:
     download_corpus(get_api_credentials("NR"))
     corpus = read_json_as_dict(corpus_path)
     (tiploc_to_crs, crs_to_tiploc) = translate_corpus_to_translators(corpus)
@@ -200,7 +172,7 @@ def setup_data() -> Data:
     bplan = read_tsv_as_list(bplan_path)
     stations = translate_bplan_to_stations(bplan, tiploc_to_crs)
     (tiploc_lookup, crs_lookup) = get_station_lookups(stations)
-    write_station_lookup(tiploc_lookup, tiploc_lookup_path)
-    write_station_lookup(crs_lookup, crs_lookup_path)
+    write_lookup(tiploc_lookup, tiploc_lookup_path)
+    write_lookup(crs_lookup, crs_lookup_path)
     write_station_data(stations, station_json_path)
-    return Data(stations, tiploc_lookup, crs_lookup)
+    return TrainData(stations, tiploc_lookup, crs_lookup)

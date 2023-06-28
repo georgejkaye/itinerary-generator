@@ -1,5 +1,5 @@
 import re
-from typing import List, Optional, Tuple
+from typing import Dict, List, Optional, Tuple
 from bs4 import BeautifulSoup, Tag
 from arrow import Arrow
 import arrow
@@ -47,20 +47,8 @@ def get_bus_stop_atco(stop_page: BeautifulSoup) -> str:
 bracket_regex = r"(.*) \((.*)\)"
 
 
-def get_bus_stop(atco: str) -> BusStop:
-    stop_url = get_bus_stop_url(atco)
-    page = get_page(stop_url)
-    stop_name = get_bus_stop_name(page)
-    bracket_matches = re.match(bracket_regex, stop_name)
-    if bracket_matches is not None:
-        stop_name = bracket_matches.group(1)
-        stop_stand = bracket_matches.group(2)
-    else:
-        stop_stand = None
-    (stop_lat, stop_lon) = get_bus_stop_latlon(page)
-    stop_naptan = get_bus_stop_naptan(page)
-    stop_atco = get_bus_stop_atco(page)
-    return BusStop(stop_name, stop_stand, stop_lat, stop_lon, stop_naptan, stop_atco)
+def get_bus_stop(atco: str, lookup: Dict[str, BusStop]) -> BusStop:
+    return lookup[atco]
 
 
 def get_bus_trip_page(id: int, stop_time: Optional[int] = None) -> BeautifulSoup:

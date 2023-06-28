@@ -2,6 +2,7 @@ from dataclasses import dataclass
 from typing import List, Optional, Sequence, Tuple
 from arrow import Arrow
 import arrow
+from dataclasses_json import dataclass_json
 from bus.urls import get_bus_service_url, get_bus_stop_url, get_bus_trip_url
 
 from structs import (
@@ -13,17 +14,19 @@ from structs import (
 )
 
 
+@dataclass_json
 @dataclass
 class BusStop(StopInterface):
     name: str
-    location: Optional[str]
+    indicator: str
+    bearing: str
     lat: float
     lon: float
     naptan: Optional[str]
     atco: str
 
     def get_name(self) -> str:
-        return f"{self.name} ({self.location})"
+        return f"{self.name} ({self.indicator})"
 
     def get_url(self) -> str:
         return get_bus_stop_url(self.atco)
@@ -32,7 +35,7 @@ class BusStop(StopInterface):
         return (self.lat, self.lon)
 
     def get_location(self) -> Optional[str]:
-        return self.location
+        return self.indicator
 
     def get_identifiers(self):
         return {"naptan": self.naptan, "atco": self.atco}
