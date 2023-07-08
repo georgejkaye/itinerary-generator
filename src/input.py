@@ -9,12 +9,12 @@ from train.scrapers import make_train_service
 from train.structs import TrainService, TrainStation
 
 
-def parse_bus_element(item: dict, lookup: Dict[str, BusStop]) -> Segment:
+def parse_bus_element(item: dict) -> Segment:
     date = arrow.get(item["date"])
     id = int(item["id"])
     board = item["board"]
     alight = item["alight"]
-    trip = get_bus_trip(date, id, lookup)
+    trip = get_bus_trip(date, id)
     segment = get_segment(trip, board, alight)
     if segment is None:
         raise RuntimeError("Not a valid segment")

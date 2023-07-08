@@ -16,6 +16,7 @@ def get_naptan_data_url() -> str:
 naptan_path = data_directory / "naptan.csv"
 bus_stop_path = data_directory / "bus-stops.json"
 atco_lookup_path = data_directory / "atco-lookup.json"
+bus_directory = data_directory / "bus"
 
 
 def download_naptan():
@@ -87,9 +88,13 @@ def write_stop_lookup(lookup: Dict[str, BusStop], file: str | Path):
 
 
 def write_bus_stop_data(stops: List[BusStop], file: str | Path):
-    stop_json = BusStop.schema().dumps(stops, many=True)  # type: ignore
-    with open(file, "w") as f:
-        f.write(stop_json)
+    if not os.path.isdir(bus_directory):
+        os.makedirs(bus_directory)
+    for stop in stops:
+        json = BusStop.schema().dumps(stop)  # type: ignore
+        path = bus_directory / stop.atco
+        with open(path, "w") as f:
+            f.write(json)
 
 
 def read_stop_data(file: str | Path) -> List[BusStop]:
@@ -109,7 +114,6 @@ def read_stop_lookup(file: str | Path) -> Dict[str, BusStop]:
 
 @dataclass
 class BusData:
-    stops: List[BusStop]
     atco_lookup: Dict[str, BusStop]
 
 
@@ -120,10 +124,17 @@ def setup_bus_data() -> BusData:
     lookup = get_stop_lookup(stops)
     write_bus_stop_data(stops, bus_stop_path)
     write_lookup(lookup, atco_lookup_path)
-    return BusData(stops, lookup)
+    return BusData(lookup)
 
 
 def read_bus_data() -> BusData:
-    stops = read_stop_data(bus_stop_path)
+    # stops = read_stop_data(bus_stop_path)
     lookup = read_stop_lookup(atco_lookup_path)
-    return BusData(stops, lookup)
+    return BusData(lookup)
+
+
+def get_bus_stop_json(atco: str) -> dict:
+    path = bus_directory / atco
+    with open(path, "r") as f:
+        data = json.load(f)
+    return data
