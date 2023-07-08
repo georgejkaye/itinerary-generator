@@ -36,6 +36,31 @@ lat = 29
 lon = 30
 
 
+def trim_indicator_prefixes(prefixes: list[str], indicator: str) -> str:
+    for prefix in prefixes:
+        length = len(prefix)
+        if indicator[0:length] == prefix:
+            return indicator[length:]
+    return indicator
+
+
+def replace_indicator(replacements: dict[str, str], indicator: str) -> str:
+    for key, val in replacements.items():
+        if key in indicator:
+            return indicator.replace(key, val)
+    return indicator
+
+
+replacements = {
+    "adjacent": "adj",
+    "opposite": "opp",
+    "outside": "o/s",
+    "near": "nr",
+    "corner": "cnr",
+}
+redundant_prefixes = ["Stop", "stand", "bay", "platform"]
+
+
 def read_naptan() -> List[BusStop]:
     stops = []
     with open(naptan_path, "r") as f:
@@ -50,6 +75,8 @@ def read_naptan() -> List[BusStop]:
                 stop_naptan = row[naptan]
             stop_name = row[name]
             stop_indicator = row[indicator]
+            stop_replaced = replace_indicator(replacements, stop_indicator)
+            stop_trimmed = trim_indicator_prefixes(redundant_prefixes, stop_replaced)
             stop_bearing = row[bearing]
             if row[lat] == "" or row[lon] == "":
                 stop_east = float(row[east])
@@ -61,7 +88,7 @@ def read_naptan() -> List[BusStop]:
                 stop_lon = float(row[lon])
             stop = BusStop(
                 stop_name,
-                stop_indicator,
+                stop_trimmed,
                 stop_bearing,
                 stop_lat,
                 stop_lon,
@@ -90,7 +117,9 @@ def write_stop_lookup(lookup: Dict[str, BusStop], file: str | Path):
 def write_bus_stop_data(stops: List[BusStop], file: str | Path):
     if not os.path.isdir(bus_directory):
         os.makedirs(bus_directory)
-    for stop in stops:
+    total = len(stops)
+    for i, stop in enumerate(stops):
+        print(f"writing {i}/{total}: {stop.atco}")
         json = BusStop.schema().dumps(stop)  # type: ignore
         path = bus_directory / stop.atco
         with open(path, "w") as f:
@@ -117,14 +146,14 @@ class BusData:
     atco_lookup: Dict[str, BusStop]
 
 
-def setup_bus_data() -> BusData:
+def setup_bus_data():
     if not os.path.isfile(naptan_path):
         download_naptan()
     stops = read_naptan()
-    lookup = get_stop_lookup(stops)
+    # lookup = get_stop_lookup(stops)
     write_bus_stop_data(stops, bus_stop_path)
-    write_lookup(lookup, atco_lookup_path)
-    return BusData(lookup)
+    # write_lookup(lookup, atco_lookup_path)
+    # return BusData(lookup)
 
 
 def read_bus_data() -> BusData:
