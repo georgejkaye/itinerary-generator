@@ -55,7 +55,12 @@ def get_service_stop(
 def get_service_stops(
     locations: List[dict], date: Arrow, crs_lookup: Dict[str, TrainStation]
 ) -> List[TrainServiceStop]:
-    return list(map(lambda x: get_service_stop(x, date, crs_lookup), locations))
+    stops = []
+    for loc in locations:
+        if loc["isCall"]:
+            stop = get_service_stop(loc, date, crs_lookup)
+            stops.append(stop)
+    return stops
 
 
 def make_train_service(

@@ -157,7 +157,6 @@ def read_crs_tiploc_translator() -> Dict[str, str]:
 
 @dataclass
 class TrainData:
-    stations: List[TrainStation]
     tiploc_lookup: Dict[str, TrainStation]
     crs_lookup: Dict[str, TrainStation]
 
@@ -179,11 +178,11 @@ def setup_train_data() -> TrainData:
     write_lookup(tiploc_lookup, tiploc_lookup_path)
     write_lookup(crs_lookup, crs_lookup_path)
     write_station_data(stations, station_json_path)
-    return TrainData(stations, tiploc_lookup, crs_lookup)
+    return TrainData(tiploc_lookup, crs_lookup)
 
 
 def read_train_data() -> TrainData:
-    stations = read_station_data(station_json_path)
+    # stations = read_station_data(station_json_path)
     tiploc_lookup = read_station_lookup(tiploc_lookup_path)
     crs_lookup = read_station_lookup(crs_lookup_path)
-    return TrainData(stations, tiploc_lookup, crs_lookup)
+    return TrainData(tiploc_lookup, crs_lookup)
