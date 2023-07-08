@@ -1,0 +1,76 @@
+html {
+    font-family: 'Raleway', 'sans-serif';
+    font-weight: 400;
+}
+
+a {
+    text-decoration: none;
+}
+
+.container {
+    width: 750px;
+    margin: auto;
+}
+
+.segment {
+    width: 100%;
+    padding: 25px 0;
+}
+
+.service-title-cell {
+    padding: 0;
+}
+
+.trip-identifier {
+    font-size: 1.5em;
+    font-weight: bold;
+    border: 1pt solid black;
+    padding: 2px 5px;
+    margin-right: 10px;
+}
+
+.trip-destination {
+    font-size: 1.5em;
+    font-weight: bold;
+    margin-right: 10px
+}
+
+.stop-name {
+    font-weight: bold;
+    width: 66%;
+}
+
+.service-operator {
+    border: 1pt solid black;
+    padding: 2px 5px;
+    margin-right: 10px;
+}
+
+.service-operator-cell {
+    padding: 10px 0;
+}
+
+.trip-endpoint {
+    font-size: 1.5em;
+}
+
+.stop-location {
+    width: 15%;
+    font-style: italic;
+    color: gray;
+    text-align: right;
+    padding: 5px 25px;
+    font-size: 0.9em;
+}
+
+.stop-arr, .stop-dep {
+    padding: 5px;
+    width: 2%;
+    text-align: right;
+}
+
+.endpoint-arr, .endpoint-dep {
+    font-size: 1.5em;
+    font-weight: bold;
+    text-align: center;
+}
