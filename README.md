@@ -1,2 +1,3 @@
 # itinerary-generator
-Generating html documents for trip itineraries 
+
+Generating html documents for trip itineraries
