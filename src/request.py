@@ -15,6 +15,7 @@ def make_request(
         auth = HTTPBasicAuth(credentials.user, credentials.password)
     else:
         auth = None
+    print(f"Making request to {url}")
     return requests.get(url, auth=auth, stream=stream)
 
 
