@@ -1,5 +1,6 @@
 # downloaded data
 data/
+out/
 
 # dotenv
 .env
