@@ -1,4 +1,5 @@
 from datetime import timedelta
+from pathlib import Path
 from typing import List
 from arrow import Arrow
 from jinja2 import Environment, FileSystemLoader, select_autoescape
@@ -22,7 +23,7 @@ def hours_minutes(input: timedelta):
     return get_duration_string(input)
 
 
-def write_output(segments: List[Segment]):
+def write_output(segments: List[Segment], output_file: Path | str):
     env = Environment(
         loader=FileSystemLoader("templates"), autoescape=select_autoescape()
     )
@@ -35,5 +36,5 @@ def write_output(segments: List[Segment]):
     }
     index = env.get_template("index.html")
     html = index.render(segments=segments)
-    with open("output.html", "w") as file:
+    with open(output_file, "w") as file:
         file.write(html)
