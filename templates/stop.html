@@ -14,10 +14,10 @@
         {% endif %}
     </td>
     <td class="arr">
-        {% if arr %}{{ stop.get_arr_time() | colon_time }}{% endif %}
+        {% if arr and stop.get_arr_time() %}{{ stop.get_arr_time() | colon_time }}{% endif %}
     </td>
     <td class="dep">
-        {% if dep %}{{ stop.get_dep_time() | colon_time }}{% endif %}
+        {% if dep and stop.get_dep_time() %}{{ stop.get_dep_time() | colon_time }}{% endif %}
     </td>
 </tr>
 {% endmacro %}
