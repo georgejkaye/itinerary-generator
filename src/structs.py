@@ -203,7 +203,7 @@ class Segment:
 
     # def get_intermediate_stops(self) -> Sequence[TripStopInterface[T]]:
     def get_intermediate_stops(self) -> Sequence[TripStopInterface]:
-        return self.get_segment_stops()[1:-2]
+        return self.get_segment_stops()[1:-1]
 
     # def get_alight_stop(self) -> TripStopInterface[T]:
     def get_alight_stop(self) -> TripStopInterface:
