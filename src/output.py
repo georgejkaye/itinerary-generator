@@ -28,7 +28,7 @@ def hours_minutes(input: timedelta):
     return get_duration_string(input)
 
 
-def write_output(segments: List[Segment], output_path: Path | str):
+def write_output(segments: List[Segment], output: Path | str):
     env = Environment(
         loader=FileSystemLoader("templates"), autoescape=select_autoescape()
     )
@@ -41,9 +41,12 @@ def write_output(segments: List[Segment], output_path: Path | str):
     }
     index = env.get_template("index.html")
     html = index.render(segments=segments)
-    html_path = Path(output_path) / "index.html"
-    os.makedirs(output_path, exist_ok=True)
+    output_path = Path(output)
+    html_path = output_path / "index.html"
+    # delete any previous build
+    shutil.rmtree(output_path)
+    os.makedirs(output_path)
     with open(html_path, "w") as file:
         file.write(html)
-    output_css_path = Path(output_path) / "styles.css"
-    shutil.copyfile(css_path, output_css_path)
+    output_assets_dir = output_path / "assets"
+    shutil.copytree(assets_dir, output_assets_dir)
