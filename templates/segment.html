@@ -1,13 +1,17 @@
 {% import 'stop.html' as stop %}
+{% import 'markers/board.html' as mk_board %}
+{% import 'markers/alight.html' as mk_alight %}
+{% import 'markers/transition.html' as mk_transition %}
+{% import 'markers/call.html' as mk_call %}
 {%- macro seg(segment) -%}
+{% set colour_style = "background-color: " + segment.get_bg_colour() + "; color: " + segment.get_fg_colour() + "; border: 1px solid " + segment.get_border_colour()%}
 <table class="segment">
     <tr>
-        <td class="stop-marker">
-            <img class="marker" src="assets/markers/transition.svg" />
-        </td>
+        {{ mk_transition.marker(segment.get_bg_colour(), 50) }}
         <td class="service-title-cell" colspan="4">
-            <div style="display: flex; align-items: center;">
-                <div class="trip-identifier">
+            <div class="segment-title">
+                <div class="trip-identifier" style="{{ colour_style }}"
+                >
                     <a href="{{ segment.trip.get_url() }}">
                         {{ segment.trip.get_identifier() }}
                     </a>
@@ -16,25 +20,23 @@
                     {{ segment.trip.get_destinations() | ampersand }}
                 </div>
                 <div class="trip-duration">
-                    {{ segment.get_segment_stops() | length - 1 }} stops, {{ segment.get_duration() | hours_minutes }}
+                    {{ segment.get_segment_stops() | length - 1 }} stops ({{ segment.get_duration() | hours_minutes }})
                 </div>
             </div>
         </td>
     </tr>
     <tr>
-        <td class="stop-marker">
-            <img class="marker" src="assets/markers/transition-short.svg" />
-        </td>
+        {{ mk_transition.marker(segment.get_bg_colour(), 30) }}
         <td class="service-operator-cell" colspan="4">
-            <span class="service-operator">
+            <span class="service-operator" style="{{ colour_style }}">
                 {{ segment.trip.get_operator() }}
             </span>
         </td>
     </tr>
-    {{- stop.stop(segment.get_board_stop(), "board-stop", "begin", False, True) -}}
+    {{- stop.stop(segment.get_board_stop(), "board-stop", mk_board.marker(segment.get_bg_colour()), False, True) -}}
     {% for call in segment.get_intermediate_stops() %}
-        {{- stop.stop(call, "intermediate-stop", "call", True, True) -}}
+        {{- stop.stop(call, "intermediate-stop", mk_call.marker(segment.get_bg_colour()), True, True) -}}
     {% endfor %}
-    {{- stop.stop(segment.get_alight_stop(), "alight-stop", "end", True, False) -}}
+    {{- stop.stop(segment.get_alight_stop(), "alight-stop", mk_alight.marker(segment.get_bg_colour()), True, False) -}}
 </table>
 {% endmacro %}

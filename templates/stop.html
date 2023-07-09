@@ -1,8 +1,6 @@
 {% macro stop(stop, classes, marker, arr, dep) -%}
 <tr class="{{ classes }}">
-    <td class="stop-marker">
-        <img class="marker" src="assets/markers/{{ marker }}.svg" />
-    </td>
+    {{ marker }}
     <td class="stop-name">
         <a href="{{ stop.get_url() }}">
                 {{ stop.get_name() }}

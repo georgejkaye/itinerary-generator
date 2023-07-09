@@ -1,0 +1,7 @@
+{% macro marker(colour, height) %}
+    <td class="stop-marker">
+        <svg class="marker-icon" height="{{ height }}px" width="50px">
+            <line x1="25" y1="0" x2="25" y2="{{ height }}" stroke="#000000" stroke-width="5" stroke-dasharray="5px, 5px", stroke-dashoffset="5px"/>
+        </svg>
+    </td>
+{% endmacro %}

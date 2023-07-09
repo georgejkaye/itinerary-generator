@@ -183,6 +183,9 @@ class Segment:
     trip: TripInterface
     board_index: int
     alight_index: int
+    fg_colour: str
+    bg_colour: str
+    border_colour: str
 
     # def get_segment_stops(self) -> Sequence[TripStopInterface[T]]:
     def get_segment_stops(self) -> Sequence[TripStopInterface]:
@@ -227,8 +230,24 @@ class Segment:
     def get_duration_string(self) -> str:
         return get_duration_string(self.get_duration())
 
+    def get_fg_colour(self) -> str:
+        return f"{ self.fg_colour }"
 
-def get_segment(trip: TripInterface, board: str, alight: str) -> Optional[Segment]:
+    def get_bg_colour(self) -> str:
+        return f"{ self.bg_colour }"
+
+    def get_border_colour(self) -> Optional[str]:
+        return f"{ self.border_colour }"
+
+
+def get_segment(
+    trip: TripInterface,
+    board: str,
+    alight: str,
+    fg_colour: str,
+    bg_colour: str,
+    border_colour: str,
+) -> Optional[Segment]:
     start = None
     end = None
     for i, stop in enumerate(trip.get_stops()):
@@ -238,7 +257,7 @@ def get_segment(trip: TripInterface, board: str, alight: str) -> Optional[Segmen
             if start is None:
                 return None
             end = i
-            return Segment(trip, start, end)
+            return Segment(trip, start, end, fg_colour, bg_colour, border_colour)
     return None
 
 

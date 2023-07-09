@@ -5,16 +5,18 @@ html {
 
 a {
     text-decoration: none;
-    color:black;
 }
-
 a:hover {
     text-decoration: underline;
 }
 
-a:visited {
+.stop-name a {
+    color:black;
+}
+.stop-name a:visited {
     color: black;
 }
+
 
 
 table {
@@ -45,12 +47,24 @@ td {
     padding: 0;
 }
 
+.segment-title {
+    display: flex;
+    align-items: baseline;
+}
+
+.segment-title a:visited {
+    color: inherit;
+}
+
 .trip-identifier {
     font-size: 1.5em;
     font-weight: bold;
-    border: 1pt solid black;
     padding: 2px 5px;
     margin-right: 10px;
+}
+
+.trip-identifier a {
+    color: inherit;
 }
 
 .trip-destination {
@@ -65,12 +79,8 @@ td {
 }
 
 .service-operator {
-    border: 1pt solid black;
     padding: 2px 5px;
     margin-right: 10px;
-}
-
-.service-operator-cell {
 }
 
 .board-stop .stop-name, .alight-stop .stop-name {
@@ -88,15 +98,19 @@ td {
 .arr, .dep {
     text-align: right;
     width: 7%;
+    padding: 0 5px;
 }
 
 .board-stop .arr , .board-stop .dep, .alight-stop .arr , .alight-stop .dep {
-    font-size: 1.25em;
     font-weight: bold;
 }
 
 .stop-marker {
     width: 50px;
+}
+
+.marker-icon {
+    display: block;
 }
 
 .stop-marker img {
