@@ -1,6 +1,10 @@
+{% import 'stop.html' as stop %}
 {%- macro seg(segment) -%}
 <table class="segment">
     <tr>
+        <td class="stop-marker">
+            <img class="marker" src="assets/markers/transition.svg" />
+        </td>
         <td class="service-title-cell" colspan="4">
             <div style="display: flex; align-items: center;">
                 <div class="trip-identifier">
@@ -12,69 +16,25 @@
                     {{ segment.trip.get_destinations() | ampersand }}
                 </div>
                 <div class="trip-duration">
-                    {{ segment.get_segment_stops() | length }} stops, {{ segment.get_duration() | hours_minutes }}
+                    {{ segment.get_segment_stops() | length - 1 }} stops, {{ segment.get_duration() | hours_minutes }}
                 </div>
             </div>
         </td>
     </tr>
     <tr>
+        <td class="stop-marker">
+            <img class="marker" src="assets/markers/transition-short.svg" />
+        </td>
         <td class="service-operator-cell" colspan="4">
             <span class="service-operator">
                 {{ segment.trip.get_operator() }}
             </span>
         </td>
     </tr>
-    <tr>
-        <td class="stop-name trip-endpoint">
-            <a href="{{ segment.get_board_stop().get_url() }}">
-                    {{ segment.get_board_stop().get_name() }}
-            </a>
-        </td>
-        <td class="stop-location">
-            {% if segment.get_board_stop().get_location() is not none %}
-                {{ segment.get_board_stop().get_location() }}
-            {% endif %}
-        </td>
-        <td class="endpoint-arr"></td>
-        <td class="endpoint-dep">
-            {{ segment.get_board_time() | colon_time }}
-        </td>
-    </tr>
-    {% for stop in segment.get_intermediate_stops() %}
-        <tr>
-            <td class="stop-name">
-                - <a href="{{ stop.get_url() }}">
-                    {{ stop.get_name() -}}
-                </a>
-            </td>
-            <td class="stop-location">
-                {% if stop.get_location() is not none %}
-                    {{ stop.get_location() }}
-                {% endif %}
-            </td>
-            <td class="stop-arr">
-                {{ stop.get_arr_time() | colon_time }}
-            </td>
-            <td class="stop-dep">
-                {{ stop.get_dep_time() | colon_time }}
-            </td>
-        </tr>
+    {{- stop.stop(segment.get_board_stop(), "board-stop", "begin", False, True) -}}
+    {% for call in segment.get_intermediate_stops() %}
+        {{- stop.stop(call, "intermediate-stop", "call", True, True) -}}
     {% endfor %}
-    <tr>
-        <td class="stop-name trip-endpoint">
-            <a href="{{ segment.get_alight_stop().get_url() }}">
-                {{ segment.get_alight_stop().get_name() }}
-            </a>
-        </td>
-        <td class="stop-location">
-            {% if segment.get_board_stop().get_location() is not none %}
-                {{ segment.get_alight_stop().get_location() }}
-            {% endif %}
-        </td>
-        <td class="endpoint-arr">
-            {{ segment.get_alight_time() | colon_time }}
-        </td>
-        <td class="endpoint-dep"></td>
-    </tr>
+    {{- stop.stop(segment.get_alight_stop(), "alight-stop", "end", True, False) -}}
 </table>
 {% endmacro %}

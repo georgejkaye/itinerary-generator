@@ -1,14 +1,38 @@
 html {
-    font-family: 'Raleway', 'sans-serif';
+    font-family: 'Roboto', 'sans-serif';
     font-weight: 400;
 }
 
 a {
     text-decoration: none;
+    color:black;
+}
+
+a:hover {
+    text-decoration: underline;
+}
+
+a:visited {
+    color: black;
+}
+
+
+table {
+    border-spacing: 0;
+    border-collapse: collapse;
+}
+
+tr {
+    padding: 0;
+}
+
+td {
+    /* border: 1px solid black; */
+    padding: 0;
 }
 
 .container {
-    width: 750px;
+    width: 500px;
     margin: auto;
 }
 
@@ -47,30 +71,37 @@ a {
 }
 
 .service-operator-cell {
-    padding: 10px 0;
 }
 
-.trip-endpoint {
+.board-stop .stop-name, .alight-stop .stop-name {
     font-size: 1.5em;
 }
 
 .stop-location {
-    width: 15%;
     font-style: italic;
     color: gray;
     text-align: right;
-    padding: 5px 25px;
+    padding: 0px 10px;
     font-size: 0.9em;
 }
 
-.stop-arr, .stop-dep {
-    padding: 5px;
-    width: 2%;
+.arr, .dep {
     text-align: right;
+    width: 7%;
 }
 
-.endpoint-arr, .endpoint-dep {
-    font-size: 1.5em;
+.board-stop .arr , .board-stop .dep, .alight-stop .arr , .alight-stop .dep {
+    font-size: 1.25em;
     font-weight: bold;
-    text-align: center;
+}
+
+.stop-marker {
+    width: 50px;
+}
+
+.stop-marker img {
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+    padding: 0;
 }
