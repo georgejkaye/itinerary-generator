@@ -5,7 +5,7 @@ import arrow
 
 def get_bus_stop_url(atco: str, dt: Arrow = arrow.now("Europe/London")) -> str:
     date_string = dt.format("YYYY-MM-DD")
-    time_string = dt.format("HH%3Amm")
+    time_string = dt.format("HH:mm")
     return f"https://bustimes.org/stops/{atco}?date={date_string}&time={time_string}"
 
 
