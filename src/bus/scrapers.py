@@ -50,7 +50,7 @@ bracket_regex = r"(.*) \((.*)\)"
 
 def get_bus_stop(atco: str) -> BusStop:
     json = get_bus_stop_json(atco)
-    stop = BusStop.from_dict(json)  # typeL ignore
+    stop = BusStop.from_dict(json)  # type: ignore
     return stop
 
 
