@@ -74,7 +74,6 @@ td {
 }
 
 .stop-name {
-    font-weight: bold;
     width: 66%;
 }
 
@@ -85,6 +84,7 @@ td {
 
 .board-stop .stop-name, .alight-stop .stop-name {
     font-size: 1.5em;
+    font-weight: bold;
 }
 
 .stop-location {
