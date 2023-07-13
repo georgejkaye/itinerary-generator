@@ -44,7 +44,12 @@ def write_output(segments: List[Segment], output: Path | str):
     output_path = Path(output)
     html_path = output_path / "index.html"
     # delete any previous build
-    shutil.rmtree(output_path)
+    if os.path.exists(output_path):
+        resp = input(f"File or directory {output_path} exists, delete? (y/N) ")
+        if resp == "y":
+            shutil.rmtree(output_path)
+        else:
+            exit(1)
     os.makedirs(output_path)
     with open(html_path, "w") as file:
         file.write(html)
