@@ -140,12 +140,12 @@ class TripInterface:
         pass
 
     @abstractmethod
-    def get_url(self) -> str:
+    def get_url(self) -> Optional[str]:
         """Get the url of an appropriate page about this trip"""
         pass
 
     @abstractmethod
-    def get_service_url(self) -> str:
+    def get_service_url(self) -> Optional[str]:
         pass
 
     @abstractmethod
@@ -171,7 +171,7 @@ class TripInterface:
         pass
 
     @abstractmethod
-    def get_operator(self) -> str:
+    def get_operator(self) -> Optional[str]:
         """Get the name of the operator of this service"""
         pass
 
@@ -244,9 +244,9 @@ def get_segment(
     trip: TripInterface,
     board: str,
     alight: str,
-    fg_colour: str,
-    bg_colour: str,
-    border_colour: str,
+    fg_colour: str = "#ffffff",
+    bg_colour: str = "#000000",
+    border_colour: str = "#000000",
 ) -> Optional[Segment]:
     start = None
     end = None

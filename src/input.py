@@ -7,6 +7,8 @@ from credentials import Credentials
 from structs import Segment, TripInterface, get_segment
 from train.scrapers import make_train_service
 from train.structs import TrainService, TrainStation
+from walk.scraper import get_direction_stats
+from walk.structs import WalkPoint, WalkStop, WalkTrip
 
 
 def get_colours(item: dict) -> Tuple[str, str, str]:
@@ -54,3 +56,24 @@ def parse_train_element(
     if segment is None:
         raise RuntimeError("Not a valid segment")
     return segment
+
+
+def parse_walk_element(item: dict) -> Segment:
+    start_dict = item["start"]
+    start_name = start_dict["name"]
+    start_lat = start_dict["lat"]
+    start_lon = start_dict["lon"]
+    start_time = arrow.get(start_dict["time"])
+    start = WalkPoint(start_name, start_lat, start_lon)
+    start_stop = WalkStop(start, start_time)
+    finish_dict = item["finish"]
+    finish_name = finish_dict["name"]
+    finish_lat = finish_dict["lat"]
+    finish_lon = finish_dict["lon"]
+    finish = WalkPoint(finish_name, finish_lat, finish_lon)
+    (distance, duration) = get_direction_stats(
+        start_lat, start_lon, finish_lat, finish_lon
+    )
+    finish_stop = WalkStop(finish, start_time.shift(seconds=duration))
+    trip = WalkTrip(start_stop, finish_stop, duration, distance)
+    return Segment(trip, 0, 1, "#ffffff", "#000000", "#000000")
