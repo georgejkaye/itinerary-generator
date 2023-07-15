@@ -18,6 +18,8 @@ from structs import (
 @dataclass
 class BusStop(StopInterface):
     name: str
+    locality: str
+    street: Optional[str]
     indicator: str
     bearing: str
     lat: float

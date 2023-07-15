@@ -28,8 +28,10 @@ def download_naptan():
 atco = 0
 naptan = 1
 name = 4
+street = 10
 indicator = 14
 bearing = 16
+locality = 18
 east = 27
 north = 28
 lat = 29
@@ -74,6 +76,10 @@ def read_naptan() -> List[BusStop]:
             else:
                 stop_naptan = row[naptan]
             stop_name = row[name].title()
+            stop_street = row[stret]
+            stop_locality = row[locality]
+            if stop_street == "":
+                stop_street = None
             stop_indicator = row[indicator]
             stop_replaced = replace_indicator(replacements, stop_indicator)
             stop_trimmed = trim_indicator_prefixes(redundant_prefixes, stop_replaced)
@@ -88,6 +94,8 @@ def read_naptan() -> List[BusStop]:
                 stop_lon = float(row[lon])
             stop = BusStop(
                 stop_name,
+                stop_locality,
+                stop_street,
                 stop_trimmed,
                 stop_bearing,
                 stop_lat,
