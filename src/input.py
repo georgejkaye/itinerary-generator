@@ -1,6 +1,8 @@
+from pathlib import Path
 from typing import Callable, Dict, Tuple
 
 import arrow
+import yaml
 from bus.scrapers import get_bus_trip
 from bus.structs import BusStop
 from credentials import Credentials
@@ -77,3 +79,26 @@ def parse_walk_element(item: dict) -> Segment:
     finish_stop = WalkStop(finish, start_time.shift(seconds=duration))
     trip = WalkTrip(start_stop, finish_stop, duration, distance)
     return Segment(trip, 0, 1, "#ffffff", "#000000", "#000000")
+
+
+def parse_elements(
+    items: list[dict], rtt_credentials: Credentials, crs_lookup: Dict[str, TrainStation]
+) -> list[Segment]:
+    segments = []
+    for item in items:
+        segment = None
+        if item["type"] == "train":
+            segment = parse_train_element(item, rtt_credentials, crs_lookup)
+        elif item["type"] == "bus":
+            segment = parse_bus_element(item)
+        if segment is not None:
+            segments.append(segment)
+    return segments
+
+
+def parse_elements_from_file(
+    path: Path | str, rtt_credentials, crs_lookup: Dict[str, TrainStation]
+) -> list[Segment]:
+    with open(path, "r") as f:
+        data = yaml.safe_load(f)
+    return parse_elements(data, rtt_credentials, crs_lookup)
