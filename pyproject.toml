@@ -1,0 +1,30 @@
+[tool.poetry]
+name = "itinerary-generator"
+version = "0.1.0"
+description = "Generating html pages detailing public transport journeys across Great Britain"
+authors = ["George Kaye <georgejkaye@gmail.com>"]
+license = "GPL-v3.0-or-later"
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.11"
+Jinja2 = "^3.1.2"
+beautifulsoup4 = "^4.12.2"
+types-beautifulsoup4 = "^4.12.0.5"
+PyYAML = "^6.0"
+types-PyYAML = "^6.0.12.10"
+requests = "^2.31.0"
+types-requests = "^2.31.0.1"
+dataclasses-json = "^0.5.9"
+python-dotenv = "^1.0.0"
+convertbng = "^0.6.43"
+arrow = "^1.2.3"
+openrouteservice = "^2.3.3"
+
+[tool.poetry.group.dev.dependencies]
+mypy = "^1.4.1"
+black = "^23.7.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
