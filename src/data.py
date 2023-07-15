@@ -21,7 +21,7 @@ def download_binary(url: str, path: str, credentials: Optional[Credentials] = No
     response = make_request(url, credentials=credentials, stream=True)
     if response.status_code != 200:
         raise RuntimeError(f"Could not get {url}")
-    with open(path, "wb") as f:
+    with open(path, "wb+") as f:
         f.write(response.raw.read())
 
 

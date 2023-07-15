@@ -162,6 +162,8 @@ class TrainData:
 
 
 def setup_train_data() -> TrainData:
+    if not os.path.isdir(data_directory):
+        os.makedirs(data_directory)
     if not os.path.isfile(corpus_path):
         download_corpus(get_api_credentials("NR"))
 

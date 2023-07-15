@@ -147,6 +147,8 @@ class BusData:
 
 
 def setup_bus_data():
+    if not os.path.isdir(data_directory):
+        os.makedirs(data_directory)
     if not os.path.isfile(naptan_path):
         download_naptan()
     stops = read_naptan()
