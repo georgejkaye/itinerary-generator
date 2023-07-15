@@ -58,7 +58,7 @@ replacements = {
     "near": "nr",
     "corner": "cnr",
 }
-redundant_prefixes = ["Stop", "stand", "bay", "platform"]
+redundant_prefixes = ["Stop", "stop", "stand", "Stand", "bay", "platform"]
 
 
 def read_naptan() -> List[BusStop]:
@@ -73,7 +73,7 @@ def read_naptan() -> List[BusStop]:
                 stop_naptan = None
             else:
                 stop_naptan = row[naptan]
-            stop_name = row[name]
+            stop_name = row[name].title()
             stop_indicator = row[indicator]
             stop_replaced = replace_indicator(replacements, stop_indicator)
             stop_trimmed = trim_indicator_prefixes(redundant_prefixes, stop_replaced)
