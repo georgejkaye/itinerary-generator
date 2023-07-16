@@ -4,39 +4,39 @@
 {% import 'markers/transition.html' as mk_transition %}
 {% import 'markers/call.html' as mk_call %}
 {%- macro seg(segment) -%}
-{% set colour_style = "background-color: " + segment.get_bg_colour() + "; color: " + segment.get_fg_colour() + "; border: 1px solid " + segment.get_border_colour()%}
+{% set colour_style = "background-color: " + segment.get_bg_colour() + "; color: " + segment.get_fg_colour()%}
 <table class="segment">
-    <tr>
-        {{ mk_transition.marker(segment.get_bg_colour(), 50) }}
-        <td class="service-title-cell" colspan="4">
-            <div class="segment-title">
-                <div class="trip-identifier" style="{{ colour_style }}"
-                >
-                    <a href="{{ segment.trip.get_url() }}">
-                        {{ segment.trip.get_identifier() }}
-                    </a>
-                </div>
-                <div class="trip-destination">
-                    {{ segment.trip.get_destinations() | ampersand }}
-                </div>
-                <div class="trip-duration">
-                    {{ segment.get_segment_stops() | length - 1 }} stops ({{ segment.get_duration() | hours_minutes }})
-                </div>
-            </div>
-        </td>
-    </tr>
-    <tr>
-        {{ mk_transition.marker(segment.get_bg_colour(), 30) }}
-        <td class="service-operator-cell" colspan="4">
-            <span class="service-operator" style="{{ colour_style }}">
-                {{ segment.trip.get_operator() }}
-            </span>
-        </td>
-    </tr>
-    {{- stop.stop(segment.get_board_stop(), "board-stop", mk_board.marker(segment.get_bg_colour()), False, True) -}}
-    {% for call in segment.get_intermediate_stops() %}
-        {{- stop.stop(call, "intermediate-stop", mk_call.marker(segment.get_bg_colour()), True, True) -}}
-    {% endfor %}
-    {{- stop.stop(segment.get_alight_stop(), "alight-stop", mk_alight.marker(segment.get_bg_colour()), True, False) -}}
+  <tr>
+    {{ mk_transition.marker(segment.get_bg_colour(), 50) }}
+    <td class="service-title-cell" colspan="4">
+      <div class="segment-title">
+        <div class="trip-identifier" style="{{ colour_style }}">
+          <a href="{{ segment.trip.get_url() }}">
+            {{ segment.trip.get_identifier() }}
+          </a>
+        </div>
+        <div class="trip-destination">
+          {{ segment.trip.get_destinations() | ampersand }}
+        </div>
+        <div class="trip-duration">
+          {{ segment.get_segment_stops() | length - 1 }} stops ({{
+          segment.get_duration() | hours_minutes }})
+        </div>
+      </div>
+    </td>
+  </tr>
+  <tr>
+    {{ mk_transition.marker(segment.get_bg_colour(), 30) }}
+    <td class="service-operator-cell" colspan="4">
+      <span class="service-operator" style="{{ colour_style }}">
+        {{ segment.trip.get_operator() }}
+      </span>
+    </td>
+  </tr>
+  {{- stop.stop(segment.get_board_stop(), "board-stop", mk_board.marker(segment.get_bg_colour()), False, True) -}}
+  {% for call in segment.get_intermediate_stops() %}
+    {{- stop.stop(call, "intermediate-stop", mk_call.marker(segment.get_bg_colour()), True, True) -}}
+  {% endfor %}
+  {{- stop.stop(segment.get_alight_stop(), "alight-stop", mk_alight.marker(segment.get_bg_colour()), True, False) -}}
 </table>
 {% endmacro %}
