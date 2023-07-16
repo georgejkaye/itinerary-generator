@@ -132,7 +132,7 @@ def write_bus_stop_data(stops: List[BusStop], file: str | Path):
         os.makedirs(bus_directory)
     total = len(stops)
     for i, stop in enumerate(stops):
-        print(f"writing {i}/{total}: {stop.atco}")
+        print(f"writing {i+1}/{total}: {stop.atco}")
         json = BusStop.schema().dumps(stop)  # type: ignore
         path = bus_directory / stop.atco
         with open(path, "w") as f:
