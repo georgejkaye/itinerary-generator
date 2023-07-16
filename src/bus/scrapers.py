@@ -1,13 +1,8 @@
-import os
 from typing import List, Optional, Tuple
 from bs4 import BeautifulSoup, Tag
 from arrow import Arrow
 import arrow
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support.wait import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
 
-from data import colours_dir, record_colours
 from request import get_href, get_id, get_page, select_all, select_one
 from bus.structs import BusStop, BusTrip, BusTripStop
 from bus.data import get_bus_stop_json
@@ -200,76 +195,3 @@ def get_bus_trip(date: Arrow, id: int) -> BusTrip:
         stops,
         operator,
     )
-
-
-def get_service_colour(slug: str) -> Optional[tuple[str, str]]:
-    service_file = colours_dir / slug
-    if os.path.exists(service_file):
-        with open(service_file, "r") as f:
-            colours = f.readlines()
-        return (colours[0], colours[1])
-    return None
-
-
-def rgb_to_hex(rgb_string: str) -> str:
-    rgb = rgb_string.split(", ")
-    r = int(rgb[0])
-    g = int(rgb[1])
-    b = int(rgb[2])
-    print(f"{r} {g} {b}")
-    return "#{:02x}{:02x}{:02x}".format(r, g, b)
-
-
-def close_google_cookies_screen(driver):
-    button = driver.find_element(By.XPATH, "//*[text()='Reject all']")
-    if button is not None:
-        button.click()
-        WebDriverWait(driver, 30).until(
-            EC.presence_of_element_located((By.CLASS_NAME, "cukLmd")),
-        )
-
-
-def get_bus_trip_colour(trip: BusTrip, driver) -> tuple[str, str]:
-    possible_colour = get_service_colour(trip.slug)
-    if possible_colour is not None:
-        return possible_colour
-    bg_colour = None
-    fg_colour = None
-    try:
-        current_stop_index = 0
-        while bg_colour is None and fg_colour is None:
-            current_stop_atco = trip.stops[current_stop_index].stop.atco
-            current_stop = get_bus_stop(current_stop_atco)
-            search_string = f"bus stop {current_stop.name} {current_stop.indicator} {current_stop.street} {current_stop.parent}"
-            search_url = f"https://www.google.co.uk/maps/?q={search_string}"
-            print(f"Making request to {search_url}")
-            driver.get(search_url)
-            element = WebDriverWait(driver, 30).until(
-                EC.presence_of_element_located((By.CSS_SELECTOR, ".cb7kab, .cukLmd"))
-            )
-            if "cookies" in element.text:
-                close_google_cookies_screen(driver)
-            elements = driver.find_elements(By.CLASS_NAME, "Bzv5Cd")
-            for elem in elements:
-                if elem.text.split(" ")[0] == trip.number:
-                    colours = elem.get_attribute("style").split("; ")
-                    try:
-                        bg_field = "background-color: rgb("
-                        bg_colour_string = colours[0][len(bg_field) : -1]
-                        bg_colour = rgb_to_hex(bg_colour_string)
-                    except:
-                        bg_colour = "#808080"
-                    try:
-                        fg_field = "color: rgb("
-                        fg_colour_string = colours[1][len(fg_field) : -2]
-                        fg_colour = rgb_to_hex(fg_colour_string)
-                    except:
-                        fg_colour = "#ffffff"
-                    break
-            current_stop_index = current_stop_index + 1
-    except:
-        print("Could not get colour!")
-        fg_colour = input("Background colour: ")
-        bg_colour = input("Foreground colour: ")
-    record_colours(trip.slug, bg_colour, fg_colour)
-    return (bg_colour, fg_colour)

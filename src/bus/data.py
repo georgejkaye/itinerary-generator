@@ -77,7 +77,7 @@ def read_naptan() -> List[BusStop]:
             else:
                 stop_naptan = row[naptan]
             stop_name = row[name].title()
-            stop_street_string = row[street]
+            stop_street_string = row[street].title()
             stop_locality = row[locality]
             stop_parent = row[parent]
             if stop_street_string == "":

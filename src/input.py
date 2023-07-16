@@ -6,7 +6,8 @@ from typing import Dict, Tuple
 from selenium import webdriver
 from selenium.webdriver.firefox.options import Options
 
-from bus.scrapers import get_bus_trip, get_bus_trip_colour
+from bus.scrapers import get_bus_trip
+from colours import get_bus_trip_colour
 from credentials import Credentials
 from structs import Segment, get_segment
 from train.scrapers import make_train_service
@@ -98,6 +99,7 @@ def parse_elements(
             segment = parse_bus_element(item, driver)
         if segment is not None:
             segments.append(segment)
+    driver.quit()
     return segments
 
 
