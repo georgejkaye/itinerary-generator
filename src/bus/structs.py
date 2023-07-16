@@ -19,6 +19,7 @@ from structs import (
 class BusStop(StopInterface):
     name: str
     locality: str
+    parent: str
     street: Optional[str]
     indicator: str
     bearing: str
