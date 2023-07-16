@@ -1,14 +1,16 @@
-from pathlib import Path
-from typing import Callable, Dict, Tuple
-
 import arrow
 import yaml
-from bus.scrapers import get_bus_trip
-from bus.structs import BusStop
+from pathlib import Path
+from typing import Dict, Tuple
+
+from selenium import webdriver
+from selenium.webdriver.firefox.options import Options
+
+from bus.scrapers import get_bus_trip, get_bus_trip_colour
 from credentials import Credentials
-from structs import Segment, TripInterface, get_segment
+from structs import Segment, get_segment
 from train.scrapers import make_train_service
-from train.structs import TrainService, TrainStation
+from train.structs import TrainStation
 from walk.scraper import get_direction_stats
 from walk.structs import WalkPoint, WalkStop, WalkTrip
 
@@ -32,14 +34,14 @@ def get_colours(item: dict) -> Tuple[str, str, str]:
     return (fg_colour, bg_colour, border_colour)
 
 
-def parse_bus_element(item: dict) -> Segment:
+def parse_bus_element(item: dict, driver) -> Segment:
     date = arrow.get(item["date"])
     id = int(item["id"])
     board = item["board"]
     alight = item["alight"]
-    (fg_colour, bg_colour, border_colour) = get_colours(item)
     trip = get_bus_trip(date, id)
-    segment = get_segment(trip, board, alight, fg_colour, bg_colour, border_colour)
+    (fg_colour, bg_colour) = get_bus_trip_colour(trip, driver)
+    segment = get_segment(trip, board, alight, fg_colour, bg_colour)
     if segment is None:
         raise RuntimeError("Not a valid segment")
     return segment
@@ -84,13 +86,16 @@ def parse_walk_element(item: dict) -> Segment:
 def parse_elements(
     items: list[dict], rtt_credentials: Credentials, crs_lookup: Dict[str, TrainStation]
 ) -> list[Segment]:
+    options = Options()
+    options.headless = True
+    driver = webdriver.Firefox(options=options)
     segments = []
     for item in items:
         segment = None
         if item["type"] == "train":
             segment = parse_train_element(item, rtt_credentials, crs_lookup)
         elif item["type"] == "bus":
-            segment = parse_bus_element(item)
+            segment = parse_bus_element(item, driver)
         if segment is not None:
             segments.append(segment)
     return segments

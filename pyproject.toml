@@ -20,6 +20,7 @@ python-dotenv = "^1.0.0"
 convertbng = "^0.6.43"
 arrow = "^1.2.3"
 openrouteservice = "^2.3.3"
+selenium = "^4.10.0"
 
 [tool.poetry.group.dev.dependencies]
 mypy = "^1.4.1"
