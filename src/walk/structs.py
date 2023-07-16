@@ -1,13 +1,10 @@
 from dataclasses import dataclass
 from typing import List, Optional, Sequence, Tuple
 from arrow import Arrow
-import arrow
 from dataclasses_json import dataclass_json
 from walk.urls import get_osm_map_at_latlon_url, get_walking_instructions_url
 
 from structs import (
-    Segment,
-    ServiceInterface,
     StopInterface,
     TripInterface,
     TripStopInterface,
@@ -70,14 +67,14 @@ class WalkTrip(TripInterface):
     duration: float
     distance: float
 
-    def get_identifier(self) -> Optional[str]:
+    def get_identifier(self) -> str:
         return "Walk"
 
     def get_name(self) -> str:
         return f"{self.origin.get_name()} - {self.destination.get_name()}"
 
     def get_start_datetime(self) -> Arrow:
-        return self.origin.stop.get_time()
+        return self.origin.get_dep_time()
 
     def get_url(self) -> Optional[str]:
         return get_walking_instructions_url(
