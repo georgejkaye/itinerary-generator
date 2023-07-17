@@ -68,12 +68,24 @@ def make_train_service(
     date: Arrow,
     credentials: Credentials,
     crs_lookup: Dict[str, TrainStation],
+    brands: Dict[str, dict],
 ) -> TrainService:
     service_dict = get_train_service_json(id, date, credentials)
     service_headcode = service_dict["trainIdentity"]
-    service_operator = service_dict["atocName"]
     service_origins = get_endpoint_details(service_dict["origin"])
     service_destinations = get_endpoint_details(service_dict["destination"])
+    service_operator_string = service_dict["atocName"]
+    brand_list = brands.get(service_operator_string)
+    if brand_list is None:
+        service_operator = service_operator_string
+    else:
+        for brand in brand_list:
+            if any(
+                item in brand["unique_endpoints"] for item in service_origins
+            ) or any(
+                item in brand["unique_endpoints"] for item in service_destinations
+            ):
+                service_operator = brand["name"]
     first_origin_time = arrow.get(service_dict["origin"][0]["publicTime"], "HHmm")
     service_datetime = arrow.get(
         date.year,

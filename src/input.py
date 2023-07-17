@@ -49,14 +49,17 @@ def parse_bus_element(item: dict, driver) -> Segment:
 
 
 def parse_train_element(
-    element: dict, rtt_credentials: Credentials, crs_lookup: Dict[str, TrainStation]
+    element: dict,
+    rtt_credentials: Credentials,
+    crs_lookup: Dict[str, TrainStation],
+    brands: dict[str, dict],
 ) -> Segment:
     id = element["id"]
     date = arrow.get(element["date"])
     board = element["board"]
     alight = element["alight"]
     (fg_colour, bg_colour, border_colour) = get_colours(element)
-    trip = make_train_service(id, date, rtt_credentials, crs_lookup)
+    trip = make_train_service(id, date, rtt_credentials, crs_lookup, brands)
     segment = get_segment(trip, board, alight, fg_colour, bg_colour, border_colour)
     if segment is None:
         raise RuntimeError("Not a valid segment")
@@ -85,7 +88,10 @@ def parse_walk_element(item: dict) -> Segment:
 
 
 def parse_elements(
-    items: list[dict], rtt_credentials: Credentials, crs_lookup: Dict[str, TrainStation]
+    items: list[dict],
+    rtt_credentials: Credentials,
+    crs_lookup: Dict[str, TrainStation],
+    brands: dict[str, dict],
 ) -> list[Segment]:
     options = Options()
     options.headless = True
@@ -94,7 +100,7 @@ def parse_elements(
     for item in items:
         segment = None
         if item["type"] == "train":
-            segment = parse_train_element(item, rtt_credentials, crs_lookup)
+            segment = parse_train_element(item, rtt_credentials, crs_lookup, brands)
         elif item["type"] == "bus":
             segment = parse_bus_element(item, driver)
         if segment is not None:
@@ -104,8 +110,11 @@ def parse_elements(
 
 
 def parse_elements_from_file(
-    path: Path | str, rtt_credentials, crs_lookup: Dict[str, TrainStation]
+    path: Path | str,
+    rtt_credentials,
+    crs_lookup: Dict[str, TrainStation],
+    brands: dict[str, dict],
 ) -> list[Segment]:
     with open(path, "r") as f:
         data = yaml.safe_load(f)
-    return parse_elements(data, rtt_credentials, crs_lookup)
+    return parse_elements(data, rtt_credentials, crs_lookup, brands)
