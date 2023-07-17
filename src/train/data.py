@@ -20,6 +20,7 @@ crs_to_tiploc_path = data_directory / "crs-to-tiploc.json"
 station_json_path = data_directory / "train-stations.json"
 tiploc_lookup_path = data_directory / "tiploc-lookup.json"
 crs_lookup_path = data_directory / "crs-lookup.json"
+brands_path = data_directory / "train-brands.json"
 
 
 def get_bplan_data_url() -> str:
@@ -155,20 +156,30 @@ def read_crs_tiploc_translator() -> Dict[str, str]:
     return read_json_as_dict(crs_to_tiploc_path)
 
 
+def download_brands():
+    brands_url = "https://georgejkaye.com/public-transport/brands.json"
+    download_binary(brands_url, brands_path)
+
+
 @dataclass
 class TrainData:
-    tiploc_lookup: Dict[str, TrainStation]
-    crs_lookup: Dict[str, TrainStation]
+    tiploc_lookup: dict[str, TrainStation]
+    crs_lookup: dict[str, TrainStation]
+    brands: dict[str, dict]
 
 
 def setup_train_data() -> TrainData:
     if not os.path.isdir(data_directory):
         os.makedirs(data_directory)
+
     if not os.path.isfile(corpus_path):
         download_corpus(get_api_credentials("NR"))
 
     if not os.path.isfile(bplan_path):
         download_bplan()
+
+    if not os.path.isfile(brands_path):
+        download_brands()
 
     corpus = read_json_as_dict(corpus_path)
     (tiploc_to_crs, crs_to_tiploc) = translate_corpus_to_translators(corpus)
@@ -180,11 +191,13 @@ def setup_train_data() -> TrainData:
     write_lookup(tiploc_lookup, tiploc_lookup_path)
     write_lookup(crs_lookup, crs_lookup_path)
     write_station_data(stations, station_json_path)
-    return TrainData(tiploc_lookup, crs_lookup)
+    brands = read_json_as_dict(brands_path)
+    return TrainData(tiploc_lookup, crs_lookup, brands)
 
 
 def read_train_data() -> TrainData:
     # stations = read_station_data(station_json_path)
     tiploc_lookup = read_station_lookup(tiploc_lookup_path)
     crs_lookup = read_station_lookup(crs_lookup_path)
-    return TrainData(tiploc_lookup, crs_lookup)
+    brands = read_json_as_dict(brands_path)
+    return TrainData(tiploc_lookup, crs_lookup, brands)
