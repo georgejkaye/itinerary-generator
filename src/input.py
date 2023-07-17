@@ -7,7 +7,7 @@ from selenium import webdriver
 from selenium.webdriver.firefox.options import Options
 
 from bus.scrapers import get_bus_trip
-from colours import get_bus_trip_colour
+from colours import get_bus_trip_colour, get_train_trip_colour
 from credentials import Credentials
 from structs import Segment, get_segment
 from train.scrapers import make_train_service
@@ -53,14 +53,15 @@ def parse_train_element(
     rtt_credentials: Credentials,
     crs_lookup: Dict[str, TrainStation],
     brands: dict[str, dict],
+    driver,
 ) -> Segment:
     id = element["id"]
     date = arrow.get(element["date"])
     board = element["board"]
     alight = element["alight"]
-    (fg_colour, bg_colour, border_colour) = get_colours(element)
     trip = make_train_service(id, date, rtt_credentials, crs_lookup, brands)
-    segment = get_segment(trip, board, alight, fg_colour, bg_colour, border_colour)
+    (fg_colour, bg_colour) = get_train_trip_colour(trip, driver)
+    segment = get_segment(trip, board, alight, fg_colour, bg_colour)
     if segment is None:
         raise RuntimeError("Not a valid segment")
     return segment
@@ -100,7 +101,9 @@ def parse_elements(
     for item in items:
         segment = None
         if item["type"] == "train":
-            segment = parse_train_element(item, rtt_credentials, crs_lookup, brands)
+            segment = parse_train_element(
+                item, rtt_credentials, crs_lookup, brands, driver
+            )
         elif item["type"] == "bus":
             segment = parse_bus_element(item, driver)
         if segment is not None:

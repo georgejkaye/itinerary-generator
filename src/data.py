@@ -37,10 +37,10 @@ def write_lookup(lookup: Dict[str, T], file: str | Path):
         f.write(json.dumps(lookup_dict))
 
 
-def record_colours(file: str, bg_colour: str, fg_colour: str):
+def record_colours(colour_directory: str, file: str, bg_colour: str, fg_colour: str):
     if not os.path.exists(colours_dir):
         os.makedirs(colours_dir)
-    colour_file = colours_dir / file
+    colour_file = colours_dir / colour_directory / file
     with open(colour_file, "w+") as f:
         f.write(bg_colour)
         f.write("\n")
