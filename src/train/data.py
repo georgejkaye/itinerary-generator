@@ -1,25 +1,18 @@
 import csv
-from dataclasses import dataclass
 import json
 import math
 import os
+import xml.etree.ElementTree as ET
+
+from dataclasses import dataclass
 from pathlib import Path
 from convertbng.util import convert_lonlat  # type: ignore
-from typing import Dict, List, Tuple, Optional
+from typing import Dict, List, Tuple, Optional, TypeVar
 from bs4 import Tag
-import requests
+
 from credentials import get_api_credentials
 from data import download_binary, extract_gz, data_directory, write_lookup
-
-from request import (
-    Credentials,
-    get_json,
-    get_page,
-    get_post_json,
-    make_request,
-    select_all,
-    select_one,
-)
+from request import Credentials, get_post_json, make_request
 from train.structs import TrainStation
 
 corpus_path = data_directory / "corpus.json"
@@ -51,9 +44,48 @@ def generate_natrail_token(natrail_credentials: Credentials) -> str:
     return json["token"]
 
 
-def access_stations(token: str):
+kb_stations_namespace = "http://nationalrail.co.uk/xml/station"
+
+
+def prefix_namespace(namespace: str, tag: str) -> str:
+    return f"{{{namespace}}}{tag}"
+
+
+T = TypeVar("T")
+
+
+def get_or_throw(t: Optional[T]) -> T:
+    if t is None:
+        raise RuntimeError("Expected Some but got None")
+    return t
+
+
+def get_tag_text(root: ET.Element, tag: str, namespace: Optional[str] = None) -> str:
+    if namespace is not None:
+        tag = prefix_namespace(namespace, tag)
+    content = get_or_throw(root.find(tag))
+    return get_or_throw(content.text)
+
+
+def get_stations(natrail_token: str) -> list[TrainStation]:
     kb_stations_url = get_kb_stations_url()
-    print(make_request(kb_stations_url, headers={"X-Auth-Token": token}).text)
+    headers = {"X-Auth-Token": natrail_token}
+    kb_stations = make_request(kb_stations_url, headers=headers).text
+    kb_stations_xml = ET.fromstring(kb_stations)
+    stations = []
+    for stn in kb_stations_xml.findall(
+        prefix_namespace(kb_stations_namespace, "Station")
+    ):
+        station_name = get_tag_text(stn, "Name", kb_stations_namespace)
+        station_crs = get_tag_text(stn, "CrsCode", kb_stations_namespace)
+        station_lat = float(get_tag_text(stn, "Latitude", kb_stations_namespace))
+        station_lon = float(get_tag_text(stn, "Longitude", kb_stations_namespace))
+        station_operator = get_tag_text(stn, "StationOperator", kb_stations_namespace)
+        station = TrainStation(
+            station_name, station_crs, station_lat, station_lon, station_operator
+        )
+        stations.append(station)
+    return stations
 
 
 def get_bplan_data_url() -> str:

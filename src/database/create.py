@@ -26,11 +26,11 @@ def create_bus_stop_table(cur):
 
 def create_train_station_table(cur):
     fields = [
-        "tiploc TEXT NOT NULL PRIMARY KEY",
         "crs TEXT NOT NULL",
         "name TEXT NOT NULL",
-        "lat FLOAT",
-        "lon FLOAT",
+        "lat FLOAT NOT NULL",
+        "lon FLOAT NOT NULL",
+        "operator TEXT NOT NULL",
     ]
     create_table(cur, "Train_Station", fields)
 

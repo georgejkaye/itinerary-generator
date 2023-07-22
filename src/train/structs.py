@@ -13,9 +13,9 @@ from train.urls import get_train_service_url, get_train_station_url
 class TrainStation:
     name: str
     crs: str
-    tiploc: str
-    lat: Optional[float]
-    lon: Optional[float]
+    lat: float
+    lon: float
+    operator: str
 
 
 @dataclass
@@ -36,7 +36,7 @@ class TrainStop(StopInterface):
         return self.platform
 
     def get_identifiers(self) -> Dict[str, Optional[str]]:
-        return {"crs": self.station.crs, "tiploc": self.station.tiploc}
+        return {"crs": self.station.crs}
 
 
 @dataclass

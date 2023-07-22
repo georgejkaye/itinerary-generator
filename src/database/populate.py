@@ -1,8 +1,11 @@
-from typing import Optional
-from bus.data import download_naptan, read_naptan
+from credentials import get_api_credentials
+
 from database.connection import connect, disconnect
 
+from bus.data import download_naptan, read_naptan
 from bus.structs import BusStop
+
+from train.data import generate_natrail_token, get_stations
 from train.structs import TrainStation
 
 
@@ -54,7 +57,7 @@ def populate_bus_stop_table(cur, conn, stops: list[BusStop]):
         "lat",
         "lon",
     ]
-    values = list(
+    values: list[list[str | None]] = list(
         map(
             lambda x: [
                 x.atco,
@@ -76,7 +79,16 @@ def populate_bus_stop_table(cur, conn, stops: list[BusStop]):
     conn.commit()
 
 
-# def populate_train_station_table(cur, list[TrainStation]
+def populate_train_station_table(cur, conn, stations: list[TrainStation]):
+    fields = ["crs", "name", "lat", "lon", "operator"]
+    values: list[list[str | None]] = list(
+        map(
+            lambda x: [x.crs, x.name, str(x.lat), str(x.lon), x.operator],
+            stations,
+        )
+    )
+    insert(cur, "Train_Station", fields, values)
+    conn.commit()
 
 
 def populate_bus_stops(cur, conn):
@@ -85,7 +97,15 @@ def populate_bus_stops(cur, conn):
     populate_bus_stop_table(cur, conn, stops)
 
 
+def populate_train_stations(cur, conn):
+    natrail_credentials = get_api_credentials("NATRAIL")
+    token = generate_natrail_token(natrail_credentials)
+    stations = get_stations(token)
+    populate_train_station_table(cur, conn, stations)
+
+
 def populate_all():
     (conn, cur) = connect()
-    populate_bus_stop_table(cur, conn, stops)
+    populate_bus_stops(cur, conn)
+    populate_train_stations(cur, conn)
     disconnect(conn, cur)
