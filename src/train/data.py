@@ -7,10 +7,19 @@ from pathlib import Path
 from convertbng.util import convert_lonlat  # type: ignore
 from typing import Dict, List, Tuple, Optional
 from bs4 import Tag
+import requests
 from credentials import get_api_credentials
 from data import download_binary, extract_gz, data_directory, write_lookup
 
-from request import Credentials, get_page, make_request, select_all, select_one
+from request import (
+    Credentials,
+    get_json,
+    get_page,
+    get_post_json,
+    make_request,
+    select_all,
+    select_one,
+)
 from train.structs import TrainStation
 
 corpus_path = data_directory / "corpus.json"
@@ -21,6 +30,30 @@ station_json_path = data_directory / "train-stations.json"
 tiploc_lookup_path = data_directory / "tiploc-lookup.json"
 crs_lookup_path = data_directory / "crs-lookup.json"
 brands_path = data_directory / "train-brands.json"
+
+
+def get_kb_stations_url() -> str:
+    return "https://opendata.nationalrail.co.uk/api/staticfeeds/4.0/stations"
+
+
+def get_kb_token_url() -> str:
+    return "https://opendata.nationalrail.co.uk/authenticate"
+
+
+def generate_natrail_token(natrail_credentials: Credentials) -> str:
+    token_url = get_kb_token_url()
+    headers = {"Content-Type": "application/x-www-form-urlencoded"}
+    data = {
+        "username": natrail_credentials.user,
+        "password": natrail_credentials.password,
+    }
+    json = get_post_json(token_url, headers=headers, data=data)
+    return json["token"]
+
+
+def access_stations(token: str):
+    kb_stations_url = get_kb_stations_url()
+    print(make_request(kb_stations_url, headers={"X-Auth-Token": token}).text)
 
 
 def get_bplan_data_url() -> str:
