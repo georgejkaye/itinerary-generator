@@ -45,6 +45,16 @@ def create_colours_table(cur):
     create_table(cur, "Colour", fields)
 
 
+def create_tocs_table(cur):
+    fields = [
+        "name TEXT NOT NULL",
+        "code TEXT NOT NULL PRIMARY KEY",
+        "fg_colour TEXT",
+        "bg_colour TEXT",
+    ]
+    create_table(cur, "Toc", fields)
+
+
 def create_brands_table(cur):
     fields = [
         "parent_company TEXT NOT NULL",

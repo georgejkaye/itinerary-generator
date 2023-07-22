@@ -5,8 +5,8 @@ from database.connection import connect, disconnect
 from bus.data import download_naptan, read_naptan
 from bus.structs import BusStop
 
-from train.data import generate_natrail_token, get_stations
-from train.structs import TrainStation
+from train.data import generate_natrail_token, get_stations, get_tocs
+from train.structs import Toc, TrainStation
 
 
 def str_or_none_to_str(x: str | None) -> str:
@@ -91,6 +91,15 @@ def populate_train_station_table(cur, conn, stations: list[TrainStation]):
     conn.commit()
 
 
+def populate_toc_table(cur, conn, tocs: list[Toc]):
+    fields = ["name", "code", "fg_colour", "bg_colour"]
+    values: list[list[str | None]] = list(
+        map(lambda x: [x.name, x.code, x.fg_colour, x.bg_colour], tocs)
+    )
+    insert(cur, "Toc", fields, values)
+    conn.commit()
+
+
 def populate_bus_stops(cur, conn):
     download_naptan()
     stops = read_naptan()
@@ -102,6 +111,13 @@ def populate_train_stations(cur, conn):
     token = generate_natrail_token(natrail_credentials)
     stations = get_stations(token)
     populate_train_station_table(cur, conn, stations)
+
+
+def populate_tocs(cur, conn):
+    natrail_credentials = get_api_credentials("NATRAIL")
+    token = generate_natrail_token(natrail_credentials)
+    tocs = get_tocs(token)
+    populate_toc_table(cur, conn, tocs)
 
 
 def populate_all():

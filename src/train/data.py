@@ -2,18 +2,19 @@ import csv
 import json
 import math
 import os
+from sys import prefix
 import xml.etree.ElementTree as ET
 
 from dataclasses import dataclass
 from pathlib import Path
 from convertbng.util import convert_lonlat  # type: ignore
 from typing import Dict, List, Tuple, Optional, TypeVar
-from bs4 import Tag
+from bs4 import BeautifulSoup, Tag
 
 from credentials import get_api_credentials
 from data import download_binary, extract_gz, data_directory, write_lookup
-from request import Credentials, get_post_json, make_request
-from train.structs import TrainStation
+from request import Credentials, get_page, get_post_json, make_request, select_all
+from train.structs import Toc, TrainStation
 
 corpus_path = data_directory / "corpus.json"
 bplan_path = data_directory / "bplan.tsv"
@@ -25,8 +26,8 @@ crs_lookup_path = data_directory / "crs-lookup.json"
 brands_path = data_directory / "train-brands.json"
 
 
-def get_kb_stations_url() -> str:
-    return "https://opendata.nationalrail.co.uk/api/staticfeeds/4.0/stations"
+def get_kb_url(feed: str) -> str:
+    return f"https://opendata.nationalrail.co.uk/api/staticfeeds/4.0/{feed}"
 
 
 def get_kb_token_url() -> str:
@@ -45,6 +46,7 @@ def generate_natrail_token(natrail_credentials: Credentials) -> str:
 
 
 kb_stations_namespace = "http://nationalrail.co.uk/xml/station"
+kb_tocs_namespace = "http://nationalrail.co.uk/xml/toc"
 
 
 def prefix_namespace(namespace: str, tag: str) -> str:
@@ -67,9 +69,13 @@ def get_tag_text(root: ET.Element, tag: str, namespace: Optional[str] = None) ->
     return get_or_throw(content.text)
 
 
+def get_natrail_token_headers(natrail_token: str) -> dict:
+    return {"X-Auth-Token": natrail_token}
+
+
 def get_stations(natrail_token: str) -> list[TrainStation]:
-    kb_stations_url = get_kb_stations_url()
-    headers = {"X-Auth-Token": natrail_token}
+    kb_stations_url = get_kb_url("stations")
+    headers = get_natrail_token_headers(natrail_token)
     kb_stations = make_request(kb_stations_url, headers=headers).text
     kb_stations_xml = ET.fromstring(kb_stations)
     stations = []
@@ -86,6 +92,44 @@ def get_stations(natrail_token: str) -> list[TrainStation]:
         )
         stations.append(station)
     return stations
+
+
+toc_colours_page = (
+    "https://en.wikipedia.org/wiki/Wikipedia:WikiProject_UK_Railways/Colours_list"
+)
+
+
+def get_toc_colours_page() -> BeautifulSoup:
+    return get_page(toc_colours_page)
+
+
+def get_toc_colour(colours_page: BeautifulSoup, toc_name: str) -> Optional[str]:
+    rows = select_all(colours_page, "tr")
+    for row in rows[2:]:
+        cells = select_all(row, "td")
+        if len(cells) == 5 and toc_name in cells[4].text:
+            return f"#{cells[3].text}"
+    return None
+
+
+def get_tocs(natrail_token: str) -> list[Toc]:
+    toc_colour_page = get_toc_colours_page()
+    kb_tocs_url = get_kb_url("tocs")
+    headers = get_natrail_token_headers(natrail_token)
+    kb_tocs = make_request(kb_tocs_url, headers=headers).text
+    kb_tocs_xml = ET.fromstring(kb_tocs)
+    tocs = []
+    for toc in kb_tocs_xml.findall(
+        prefix_namespace(kb_tocs_namespace, "TrainOperatingCompany")
+    ):
+        toc_name = get_tag_text(toc, "Name", kb_tocs_namespace)
+        toc_code = get_tag_text(toc, "AtocCode", kb_tocs_namespace)
+        toc_colour = get_toc_colour(toc_colour_page, toc_name)
+        if toc_colour is None:
+            toc_colour = "#000000"
+        toc_obj = Toc(toc_name, toc_code, "#ffffff", toc_colour)
+        tocs.append(toc_obj)
+    return tocs
 
 
 def get_bplan_data_url() -> str:

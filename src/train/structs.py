@@ -8,6 +8,14 @@ from structs import StopInterface, TripInterface, TripStopInterface
 from train.urls import get_train_service_url, get_train_station_url
 
 
+@dataclass
+class Toc:
+    name: str
+    code: str
+    fg_colour: str
+    bg_colour: str
+
+
 @dataclass_json
 @dataclass
 class TrainStation:
