@@ -20,9 +20,10 @@ class BusStop(StopInterface):
     name: str
     locality: str
     parent: str
-    street: Optional[str]
-    indicator: str
-    bearing: str
+    landmark: Optional[str]
+    street: str
+    indicator: Optional[str]
+    bearing: Optional[str]
     lat: float
     lon: float
     naptan: Optional[str]

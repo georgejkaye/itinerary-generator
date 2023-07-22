@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "itinerary-generator"
+name = "itinerary-generator-api"
 version = "0.1.0"
 description = "Generating html pages detailing public transport journeys across Great Britain"
 authors = ["George Kaye <georgejkaye@gmail.com>"]
@@ -21,6 +21,8 @@ convertbng = "^0.6.43"
 arrow = "^1.2.3"
 openrouteservice = "^2.3.3"
 selenium = "^4.10.0"
+psycopg2 = "^2.9.6"
+types-psycopg2 = "^2.9.21.10"
 
 [tool.poetry.group.dev.dependencies]
 mypy = "^1.4.1"

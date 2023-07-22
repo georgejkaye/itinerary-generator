@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 import json
 import os
+import string
 from pathlib import Path
 from typing import Dict, List
 from bus.structs import BusStop
@@ -20,6 +21,8 @@ bus_directory = data_directory / "bus"
 
 
 def download_naptan():
+    if not os.path.exists(data_directory):
+        os.makedirs(data_directory)
     naptan_url = get_naptan_data_url()
     download_binary(naptan_url, naptan_path)
 
@@ -28,6 +31,7 @@ def download_naptan():
 atco = 0
 naptan = 1
 name = 4
+landmark = 8
 street = 10
 indicator = 14
 bearing = 16
@@ -60,6 +64,9 @@ replacements = {
     "outside": "o/s",
     "near": "nr",
     "corner": "cnr",
+    "After": "after",
+    "Opp": "opp",
+    "Adj": "adj",
 }
 redundant_prefixes = ["Stop", "stop", "stand", "Stand", "bay", "platform"]
 
@@ -76,14 +83,11 @@ def read_naptan() -> List[BusStop]:
                 stop_naptan = None
             else:
                 stop_naptan = row[naptan]
-            stop_name = row[name].title()
-            stop_street_string = row[street].title()
+            stop_name = string.capwords(row[name])
+            stop_street = string.capwords(row[street])
+            stop_landmark = string.capwords(row[landmark])
             stop_locality = row[locality]
             stop_parent = row[parent]
-            if stop_street_string == "":
-                stop_street = None
-            else:
-                stop_street = stop_street_string
             stop_indicator = row[indicator]
             stop_replaced = replace_indicator(replacements, stop_indicator)
             stop_trimmed = trim_indicator_prefixes(redundant_prefixes, stop_replaced)
@@ -100,6 +104,7 @@ def read_naptan() -> List[BusStop]:
                 stop_name,
                 stop_locality,
                 stop_parent,
+                stop_landmark,
                 stop_street,
                 stop_trimmed,
                 stop_bearing,
