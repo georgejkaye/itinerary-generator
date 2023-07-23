@@ -1,12 +1,12 @@
-import xml.etree.ElementTree as ET
-
-from dataclasses import dataclass
-from typing import Optional
-
 from credentials import Credentials
 
-from pull.request import get_post_json, make_request
-from pull.core import data_directory, download_binary, extract_gz, get_or_throw
+from pull.core import (
+    data_directory,
+    download_binary,
+    extract_gz,
+    get_or_throw,
+    get_post_json,
+)
 
 ################################################################################
 #
@@ -40,17 +40,6 @@ def generate_natrail_token(natrail_credentials: Credentials) -> str:
 
 kb_stations_namespace = "http://nationalrail.co.uk/xml/station"
 kb_tocs_namespace = "http://nationalrail.co.uk/xml/toc"
-
-
-def prefix_namespace(namespace: str, tag: str) -> str:
-    return f"{{{namespace}}}{tag}"
-
-
-def get_tag_text(root: ET.Element, tag: str, namespace: Optional[str] = None) -> str:
-    if namespace is not None:
-        tag = prefix_namespace(namespace, tag)
-    content = get_or_throw(root.find(tag))
-    return get_or_throw(content.text)
 
 
 def get_natrail_token_headers(natrail_token: str) -> dict:
@@ -102,64 +91,3 @@ def download_bplan():
     bplan_download_path = "data/bplan.gz"
     download_binary(bplan_url, bplan_download_path)
     extract_gz(bplan_download_path, bplan_path)
-
-
-################################################################################
-# TrainStation
-################################################################################
-
-
-@dataclass
-class TrainStation:
-    name: str
-    crs: str
-    lat: float
-    lon: float
-    operator: str
-
-
-def get_stations(natrail_token: str) -> list[TrainStation]:
-    kb_stations_url = get_kb_url("stations")
-    headers = get_natrail_token_headers(natrail_token)
-    kb_stations = make_request(kb_stations_url, headers=headers).text
-    kb_stations_xml = ET.fromstring(kb_stations)
-    stations = []
-    for stn in kb_stations_xml.findall(
-        prefix_namespace(kb_stations_namespace, "Station")
-    ):
-        station_name = get_tag_text(stn, "Name", kb_stations_namespace)
-        station_crs = get_tag_text(stn, "CrsCode", kb_stations_namespace)
-        station_lat = float(get_tag_text(stn, "Latitude", kb_stations_namespace))
-        station_lon = float(get_tag_text(stn, "Longitude", kb_stations_namespace))
-        station_operator = get_tag_text(stn, "StationOperator", kb_stations_namespace)
-        station = TrainStation(
-            station_name, station_crs, station_lat, station_lon, station_operator
-        )
-        stations.append(station)
-    return stations
-
-
-################################################################################
-# TOC (Train Operating Company)
-################################################################################
-
-
-@dataclass
-class Toc:
-    name: str
-    atoc: str
-
-
-def get_tocs(natrail_token: str) -> list[tuple[str, str]]:
-    kb_tocs_url = get_kb_url("tocs")
-    headers = get_natrail_token_headers(natrail_token)
-    kb_tocs = make_request(kb_tocs_url, headers=headers).text
-    kb_tocs_xml = ET.fromstring(kb_tocs)
-    tocs = []
-    for toc in kb_tocs_xml.findall(
-        prefix_namespace(kb_tocs_namespace, "TrainOperatingCompany")
-    ):
-        toc_name = get_tag_text(toc, "Name", kb_tocs_namespace)
-        toc_code = get_tag_text(toc, "AtocCode", kb_tocs_namespace)
-        tocs.append((toc_name, toc_code))
-    return tocs

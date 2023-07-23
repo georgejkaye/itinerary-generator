@@ -1,44 +1,11 @@
 from credentials import get_api_credentials
 
-from database.connection import connect, disconnect
+from database.methods import connect, disconnect, insert
 from database.schema import *
 
 from pull.bus import BusStop, download_naptan, read_naptan
-from pull.train import TrainStation, generate_natrail_token, get_stations, get_tocs
-
-
-def str_or_none_to_str(x: str | None) -> str:
-    if x is None or x == "":
-        return "''"
-    else:
-        replaced = x.replace("\u2019", "'")
-        return f"$${replaced}$$"
-
-
-def list_of_str_and_none_to_postgres_str(values: list[str | None]) -> list[str]:
-    return list(map(str_or_none_to_str, values))
-
-
-def insert(cur, table: str, fields: list[str], values: list[list[str | None]]):
-    partition_length = 500
-    partitions = [
-        values[i * partition_length : (i + 1) * partition_length]
-        for i in range((len(values) + partition_length - 1) // partition_length)
-    ]
-    rows = ",".join(fields)
-    for partition in partitions:
-        value_strings = list(
-            map(
-                lambda x: f"({','.join(list_of_str_and_none_to_postgres_str(x))})",
-                partition,
-            )
-        )
-        statement = f"""
-            INSERT into {table}({rows})
-            VALUES {",".join(value_strings)}
-        """
-        print(statement)
-        cur.execute(statement)
+from pull.train import generate_natrail_token
+from structs.train import Toc, TrainStation, pull_stations, pull_tocs
 
 
 def populate_bus_stop_table(cur, conn, stops: list[BusStop]):
@@ -89,9 +56,9 @@ def populate_train_station_table(cur, conn, stations: list[TrainStation]):
     conn.commit()
 
 
-def populate_toc_table(cur, conn, tocs: list[tuple[str, str]]):
+def populate_toc_table(cur, conn, tocs: list[Toc]):
     fields = ["name", "atoc"]
-    values: list[list[str | None]] = list(map(lambda x: [x[0], x[1]], tocs))
+    values: list[list[str | None]] = list(map(lambda x: [x.name, x.atoc], tocs))
     insert(cur, toc_table, fields, values)
     conn.commit()
 
@@ -105,14 +72,14 @@ def populate_bus_stops(cur, conn):
 def populate_train_stations(cur, conn):
     natrail_credentials = get_api_credentials("NATRAIL")
     token = generate_natrail_token(natrail_credentials)
-    stations = get_stations(token)
+    stations = pull_stations(token)
     populate_train_station_table(cur, conn, stations)
 
 
 def populate_tocs(cur, conn):
     natrail_credentials = get_api_credentials("NATRAIL")
     token = generate_natrail_token(natrail_credentials)
-    tocs = get_tocs(token)
+    tocs = pull_tocs(token)
     populate_toc_table(cur, conn, tocs)
 
 

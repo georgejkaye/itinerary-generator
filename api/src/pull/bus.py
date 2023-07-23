@@ -2,12 +2,10 @@ import csv
 import os
 import string
 
-from pathlib import Path
-from dataclasses import dataclass
-from typing import Optional
 from convertbng.util import convert_lonlat  # type: ignore
 
 from pull.core import download_binary, data_directory
+from structs.bus import BusStop
 
 ################################################################################
 #
@@ -47,25 +45,6 @@ east = 27
 north = 28
 lat = 29
 lon = 30
-
-################################################################################
-# BusStop
-################################################################################
-
-
-@dataclass
-class BusStop:
-    atco: str
-    naptan: Optional[str]
-    name: str
-    locality: str
-    parent: str
-    landmark: Optional[str]
-    street: str
-    indicator: Optional[str]
-    bearing: Optional[str]
-    lat: float
-    lon: float
 
 
 def trim_indicator_prefixes(prefixes: list[str], indicator: str) -> str:
