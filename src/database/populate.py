@@ -1,12 +1,13 @@
 from credentials import get_api_credentials
 
 from database.connection import connect, disconnect
+from database.schema import *
 
 from bus.data import download_naptan, read_naptan
 from bus.structs import BusStop
 
 from train.data import generate_natrail_token, get_stations, get_tocs
-from train.structs import Toc, TrainStation
+from train.structs import TrainStation
 
 
 def str_or_none_to_str(x: str | None) -> str:
@@ -75,7 +76,7 @@ def populate_bus_stop_table(cur, conn, stops: list[BusStop]):
             stops,
         )
     )
-    insert(cur, "Bus_Stop", fields, values)
+    insert(cur, bus_stop_table, fields, values)
     conn.commit()
 
 
@@ -87,14 +88,14 @@ def populate_train_station_table(cur, conn, stations: list[TrainStation]):
             stations,
         )
     )
-    insert(cur, "Train_Station", fields, values)
+    insert(cur, train_station_table, fields, values)
     conn.commit()
 
 
 def populate_toc_table(cur, conn, tocs: list[tuple[str, str]]):
     fields = ["name", "atoc"]
     values: list[list[str | None]] = list(map(lambda x: [x[0], x[1]], tocs))
-    insert(cur, "Toc", fields, values)
+    insert(cur, toc_table, fields, values)
     conn.commit()
 
 

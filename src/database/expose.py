@@ -4,12 +4,13 @@ import sys
 
 from database.select import select
 from database.connection import connect, disconnect
+from database.schema import *
 
 colours_file = "colours.json"
 
 
 def expose_colours(file: Path | str, cur):
-    rows = select(cur, ["type", "code", "fg", "bg"], "Toc_Colours")
+    rows = select(cur, ["type", "code", "fg", "bg"], colours_table)
     train_colours = {}
     bus_colours = {}
     for row in rows:

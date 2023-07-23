@@ -1,0 +1,5 @@
+bus_stop_table = "Bus_Stop"
+train_station_table = "Train_Station"
+toc_table = "Toc"
+brand_table = "Brand"
+colours_table = "Colour"

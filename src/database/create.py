@@ -1,4 +1,5 @@
 from database.connection import connect, disconnect
+from database.schema import *
 
 
 def create_table(cur, name: str, fields: list[str]):
@@ -21,7 +22,7 @@ def create_bus_stop_table(cur):
         "lat FLOAT NOT NULL",
         "lon FLOAT NOT NULL",
     ]
-    create_table(cur, "Bus_Stop", fields)
+    create_table(cur, bus_stop_table, fields)
 
 
 def create_train_station_table(cur):
@@ -32,7 +33,7 @@ def create_train_station_table(cur):
         "lon FLOAT NOT NULL",
         "operator TEXT NOT NULL",
     ]
-    create_table(cur, "Train_Station", fields)
+    create_table(cur, train_station_table, fields)
 
 
 def create_colours_table(cur):
@@ -42,12 +43,12 @@ def create_colours_table(cur):
         "foreground TEXT NOT NULL",
         "background TEXT NOT NULL",
     ]
-    create_table(cur, "Colour", fields)
+    create_table(cur, colours_table, fields)
 
 
 def create_tocs_table(cur):
     fields = ["name TEXT NOT NULL", "atoc TEXT NOT NULL PRIMARY KEY"]
-    create_table(cur, "Toc", fields)
+    create_table(cur, toc_table, fields)
 
 
 def create_colour_table(cur):
@@ -57,16 +58,17 @@ def create_colour_table(cur):
         "fg_colour TEXT",
         "bg_colour TEXT",
     ]
-    create_table(cur, "Toc", fields)
+    create_table(cur, colours_table, fields)
 
 
 def create_brands_table(cur):
     fields = [
-        "parent_company TEXT NOT NULL",
+        "parent TEXT NOT NULL",
+        "atoc TEXT NOT NULL",
         "brand TEXT NOT NULL",
-        "unique_endpoints TEXT[]",
+        "endpoints TEXT[]",
     ]
-    create_table(cur, "Brands", fields)
+    create_table(cur, brand_table, fields)
 
 
 def create_all():
