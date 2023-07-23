@@ -1,4 +1,5 @@
 import json
+import os
 from pathlib import Path
 import sys
 
@@ -27,9 +28,8 @@ def expose_colours(file: Path | str, cur):
 
 def expose_all(root: Path | str):
     (conn, cur) = connect()
-    expose_colours(Path(root) / colours_file, cur)
+    root_path = Path(root)
+    if not os.path.isdir(root_path):
+        os.makedirs(root_path)
+    expose_colours(root_path / colours_file, cur)
     disconnect(conn, cur)
-
-
-if __name__ == "__main__":
-    expose_all(sys.argv[1])
