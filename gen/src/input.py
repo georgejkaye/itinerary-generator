@@ -53,18 +53,18 @@ def parse_bus_element(item: dict, driver) -> Segment:
 
 def parse_train_element(
     element: dict,
-    rtt_credentials: Credentials,
-    crs_lookup: Dict[str, TrainStation],
-    brands: dict[str, dict],
     driver,
 ) -> Segment:
     id = element["id"]
     date = arrow.get(element["date"])
     board = element["board"]
     alight = element["alight"]
-    trip = make_train_service(id, date, rtt_credentials, crs_lookup, brands)
-    (fg_colour, bg_colour) = get_train_trip_colour(trip, driver)
-    segment = get_segment(trip, board, alight, fg_colour, bg_colour)
+    trip = make_train_service(id, date)
+    if trip is None:
+        raise RuntimeError(f"Service {id} did not run on {date}")
+    segment = get_segment(
+        trip, board, alight, trip.operator.fg_colour, trip.operator.bg_colour
+    )
     if segment is None:
         raise RuntimeError("Not a valid segment")
     return segment
@@ -91,12 +91,7 @@ def parse_walk_element(item: dict) -> Segment:
     return Segment(trip, 0, 1, "#ffffff", "#000000", "#000000")
 
 
-def parse_elements(
-    items: list[dict],
-    rtt_credentials: Credentials,
-    crs_lookup: Dict[str, TrainStation],
-    brands: dict[str, dict],
-) -> list[Segment]:
+def parse_elements(items: list[dict]) -> list[Segment]:
     options = Options()
     options.headless = True
     driver = webdriver.Firefox(options=options)
@@ -104,9 +99,7 @@ def parse_elements(
     for item in items:
         segment = None
         if item["type"] == "train":
-            segment = parse_train_element(
-                item, rtt_credentials, crs_lookup, brands, driver
-            )
+            segment = parse_train_element(item, driver)
         elif item["type"] == "bus":
             segment = parse_bus_element(item, driver)
         if segment is not None:
@@ -117,10 +110,7 @@ def parse_elements(
 
 def parse_elements_from_file(
     path: Path | str,
-    rtt_credentials,
-    crs_lookup: Dict[str, TrainStation],
-    brands: dict[str, dict],
 ) -> list[Segment]:
     with open(path, "r") as f:
         data = yaml.safe_load(f)
-    return parse_elements(data, rtt_credentials, crs_lookup, brands)
+    return parse_elements(data)
