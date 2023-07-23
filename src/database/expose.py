@@ -1,13 +1,26 @@
 import json
 import os
 from pathlib import Path
-import sys
 
 from database.select import select
 from database.connection import connect, disconnect
 from database.schema import *
 
 colours_file = "colours.json"
+brands_file = "brands.json"
+
+
+def expose_brands(file: Path | str, cur):
+    rows = select(cur, ["parent", "atoc", "endpoints"], brand_table)
+    brands_dict: dict = {}
+    for row in rows:
+        brand = {"atoc": row[1], "endpoints": row[2]}
+        if row[0] in brands_dict:
+            brands_dict[row[0]].append(brand)
+        else:
+            brands_dict[row[0]] = [brand]
+    with open(file, "w+") as f:
+        f.write(json.dumps(brands_dict))
 
 
 def expose_colours(file: Path | str, cur):
@@ -32,4 +45,5 @@ def expose_all(root: Path | str):
     if not os.path.isdir(root_path):
         os.makedirs(root_path)
     expose_colours(root_path / colours_file, cur)
+    expose_brands(root_path / brands_file, cur)
     disconnect(conn, cur)

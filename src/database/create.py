@@ -64,8 +64,7 @@ def create_colour_table(cur):
 def create_brands_table(cur):
     fields = [
         "parent TEXT NOT NULL",
-        "atoc TEXT NOT NULL",
-        "brand TEXT NOT NULL",
+        "atoc TEXT NOT NULL PRIMARY KEY",
         "endpoints TEXT[]",
     ]
     create_table(cur, brand_table, fields)
