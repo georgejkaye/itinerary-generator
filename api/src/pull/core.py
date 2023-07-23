@@ -1,3 +1,4 @@
+from json import JSONDecodeError
 import xml.etree.ElementTree as ET
 import gzip
 import os
@@ -69,8 +70,13 @@ def make_request(
 
 def get_json(
     url: str, credentials: Optional[Credentials] = None, headers: Optional[dict] = None
-) -> dict:
-    return make_request(url, credentials=credentials).json()
+) -> Optional[dict]:
+    response = make_request(url, credentials=credentials)
+    try:
+        json = response.json()
+    except JSONDecodeError:
+        return None
+    return json
 
 
 def make_post_request(
