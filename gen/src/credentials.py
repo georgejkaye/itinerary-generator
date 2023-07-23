@@ -9,8 +9,6 @@ class Credentials:
 
 
 rtt = "RTT"
-natrail = "NATRAIL"
-netrail = "NETRAIL"
 
 
 def get_api_credentials(prefix: str) -> Credentials:
