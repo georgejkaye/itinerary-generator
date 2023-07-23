@@ -271,9 +271,9 @@ def get_service_stops(
         FROM
             {train_station_table}
             INNER JOIN
-                (SELECT UNNEST(%(calls)s)) calls
+                UNNEST(%(calls)s) WITH ORDINALITY AS calls(crs, index)
             ON
-                {train_station_table}.crs = calls.unnest
+                {train_station_table}.crs = calls.crs
             INNER JOIN
                 {toc_table}
             ON
@@ -282,6 +282,9 @@ def get_service_stops(
                 {colour_table}
             ON
                 {toc_table}.atoc = {colour_table}.code
+        ORDER BY
+            calls.index
+
     """
     rows = select_query(cur, statement, {"calls": call_codes})
     for loc, row in zip(locations, rows):
