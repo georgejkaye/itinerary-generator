@@ -244,8 +244,8 @@ def get_segment(
     trip: TripInterface,
     board: str,
     alight: str,
-    bg_colour: str = "#000000",
     fg_colour: str = "#ffffff",
+    bg_colour: str = "#000000",
     border_colour: str = "#000000",
 ) -> Optional[Segment]:
     start = None
