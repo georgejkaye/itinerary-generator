@@ -2,11 +2,11 @@ from typing import Dict, List, Optional
 from arrow import Arrow
 import arrow
 from bs4 import BeautifulSoup
-from api.src.credentials import Credentials
+from credentials import Credentials
 
-from request import get_json, get_page
+from request import get_json, get_json_from_api, get_or_throw, get_page
 
-from train.structs import TrainService, TrainServiceStop, TrainStation, TrainStop
+from train.structs import Toc, TrainService, TrainServiceStop, TrainStation, TrainStop
 from train.urls import get_train_service_url
 
 
@@ -15,7 +15,9 @@ def get_train_service_api_endpoint(id: str, run_date: Arrow) -> str:
     return f"https://api.rtt.io/api/v1/json/service/{id}/{date_string}"
 
 
-def get_train_service_json(id: str, date: Arrow, credentials: Credentials) -> dict:
+def get_train_service_json(
+    id: str, date: Arrow, credentials: Credentials
+) -> Optional[dict]:
     json_url = get_train_service_api_endpoint(id, date)
     return get_json(json_url, credentials=credentials)
 
@@ -64,44 +66,70 @@ def get_service_stops(
     return stops
 
 
-def make_train_service(
-    id: str,
-    date: Arrow,
-    credentials: Credentials,
-    crs_lookup: Dict[str, TrainStation],
-    brands: Dict[str, dict],
-) -> TrainService:
-    service_dict = get_train_service_json(id, date, credentials)
-    service_headcode = service_dict["trainIdentity"]
-    service_origins = get_endpoint_details(service_dict["origin"])
-    service_destinations = get_endpoint_details(service_dict["destination"])
-    service_operator_string = service_dict["atocName"]
-    brand_list = brands.get(service_operator_string)
-    if brand_list is None:
-        service_operator = service_operator_string
-    else:
-        for brand in brand_list:
-            if any(
-                item in brand["unique_endpoints"] for item in service_origins
-            ) or any(
-                item in brand["unique_endpoints"] for item in service_destinations
-            ):
-                service_operator = brand["name"]
-    first_origin_time = arrow.get(service_dict["origin"][0]["publicTime"], "HHmm")
-    service_datetime = arrow.get(
-        date.year,
-        date.month,
-        date.day,
-        first_origin_time.hour,
-        first_origin_time.minute,
+def arrow_or_none(opt: Optional[str]) -> Optional[Arrow]:
+    if opt == "" or opt is None:
+        return None
+    return arrow.get(opt)
+
+
+def make_train_service(id: str, date: Arrow) -> Optional[TrainService]:
+    service_json = get_json_from_api(
+        f"train/service/{id}/{date.year}/{date.month}/{date.day}"
     )
-    service_stops = get_service_stops(service_dict["locations"], date, crs_lookup)
+    if service_json is None:
+        return None
+    origins = list(
+        map(
+            lambda ep: TrainStation(
+                ep["name"], ep["crs"], ep["lat"], ep["lon"], ep["operator"]["name"]
+            ),
+            service_json["origins"],
+        )
+    )
+    destinations = list(
+        map(
+            lambda ep: TrainStation(
+                ep["name"], ep["crs"], ep["lat"], ep["lon"], ep["operator"]["name"]
+            ),
+            service_json["destinations"],
+        )
+    )
+    stops = list(
+        map(
+            lambda stop: TrainServiceStop(
+                TrainStop(
+                    TrainStation(
+                        stop["station"]["name"],
+                        stop["station"]["crs"],
+                        stop["station"]["lat"],
+                        stop["station"]["lon"],
+                        Toc(
+                            stop["station"]["operator"]["name"],
+                            stop["station"]["operator"]["atoc"],
+                            stop["station"]["operator"]["fg"],
+                            stop["station"]["operator"]["bg"],
+                        ),
+                    ),
+                    stop["platform"],
+                ),
+                arrow_or_none(stop["plan_arr"]),
+                arrow_or_none(stop["plan_dep"]),
+            ),
+            service_json["stops"],
+        )
+    )
+    operator = Toc(
+        service_json["operator"]["name"],
+        service_json["operator"]["atoc"],
+        service_json["operator"]["fg"],
+        service_json["operator"]["bg"],
+    )
     return TrainService(
         id,
-        service_headcode,
-        service_origins,
-        service_destinations,
-        service_datetime,
-        service_stops,
-        service_operator,
+        service_json["headcode"],
+        arrow.get(service_json["run_datetime"]),
+        origins,
+        destinations,
+        stops,
+        operator,
     )
