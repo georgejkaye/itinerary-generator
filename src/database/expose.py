@@ -2,26 +2,31 @@ import json
 from pathlib import Path
 import sys
 
+from database.select import select
 from database.connection import connect, disconnect
 
+colours_file = "colours.json"
 
-def expose_toc_colours(file: Path | str, cur):
-    statement = "SELECT code, fg, bg FROM Toc_Colours"
-    cur.execute(statement)
-    rows = cur.fetchall()
-    colours_dict = {}
+
+def expose_colours(file: Path | str, cur):
+    rows = select(cur, ["type", "code", "fg", "bg"], "Toc_Colours")
+    train_colours = {}
+    bus_colours = {}
     for row in rows:
-        colours_dict[row[0]] = {"fg": row[1], "bg": row[2]}
+        code = row[1]
+        colours = {"fg": row[2], "bg": row[3]}
+        if row[0] == "train":
+            train_colours[code] = colours
+        elif row[1] == "bus":
+            bus_colours[code] = colours
+    colours_dict = {"train": train_colours, "bus": bus_colours}
     with open(file, "w+") as f:
         f.write(json.dumps(colours_dict))
 
 
-toc_colours_file = "toc-colours.json"
-
-
 def expose_all(root: Path | str):
     (conn, cur) = connect()
-    expose_toc_colours(Path(root) / toc_colours_file, cur)
+    expose_colours(Path(root) / colours_file, cur)
     disconnect(conn, cur)
 
 

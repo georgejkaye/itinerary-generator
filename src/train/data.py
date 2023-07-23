@@ -112,8 +112,7 @@ def get_toc_colour(colours_page: BeautifulSoup, toc_name: str) -> Optional[str]:
     return None
 
 
-def get_tocs(natrail_token: str) -> list[Toc]:
-    toc_colour_page = get_toc_colours_page()
+def get_tocs(natrail_token: str) -> list[tuple[str, str]]:
     kb_tocs_url = get_kb_url("tocs")
     headers = get_natrail_token_headers(natrail_token)
     kb_tocs = make_request(kb_tocs_url, headers=headers).text
@@ -124,11 +123,7 @@ def get_tocs(natrail_token: str) -> list[Toc]:
     ):
         toc_name = get_tag_text(toc, "Name", kb_tocs_namespace)
         toc_code = get_tag_text(toc, "AtocCode", kb_tocs_namespace)
-        toc_colour = get_toc_colour(toc_colour_page, toc_name)
-        if toc_colour is None:
-            toc_colour = "#000000"
-        toc_obj = Toc(toc_name, toc_code, "#ffffff", toc_colour)
-        tocs.append(toc_obj)
+        tocs.append((toc_name, toc_code))
     return tocs
 
 

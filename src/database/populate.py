@@ -91,11 +91,9 @@ def populate_train_station_table(cur, conn, stations: list[TrainStation]):
     conn.commit()
 
 
-def populate_toc_table(cur, conn, tocs: list[Toc]):
-    fields = ["name", "code", "fg_colour", "bg_colour"]
-    values: list[list[str | None]] = list(
-        map(lambda x: [x.name, x.code, x.fg_colour, x.bg_colour], tocs)
-    )
+def populate_toc_table(cur, conn, tocs: list[tuple[str, str]]):
+    fields = ["name", "atoc"]
+    values: list[list[str | None]] = list(map(lambda x: [x[0], x[1]], tocs))
     insert(cur, "Toc", fields, values)
     conn.commit()
 

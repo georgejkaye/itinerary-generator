@@ -46,9 +46,14 @@ def create_colours_table(cur):
 
 
 def create_tocs_table(cur):
+    fields = ["name TEXT NOT NULL", "atoc TEXT NOT NULL PRIMARY KEY"]
+    create_table(cur, "Toc", fields)
+
+
+def create_colour_table(cur):
     fields = [
-        "name TEXT NOT NULL",
-        "code TEXT NOT NULL PRIMARY KEY",
+        "type TEXT NOT NULL",
+        "code TEXT NOT NULL",
         "fg_colour TEXT",
         "bg_colour TEXT",
     ]
