@@ -59,6 +59,12 @@ def insert(cur, table: str, fields: list[str], values: list[list[str | None]]):
         cur.execute(statement)
 
 
+def select_query(cur, query: str, params: dict = {}) -> list:
+    cur.execute(query, params)
+    rows = cur.fetchall()
+    return rows
+
+
 def select(
     cur, fields: list[str], table: str, where: list[str] = [], params: dict = {}
 ) -> list:

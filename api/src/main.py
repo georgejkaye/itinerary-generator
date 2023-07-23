@@ -1,14 +1,20 @@
-from http.client import HTTPException
-from typing import Optional
+import arrow
+
+from arrow import Arrow
 from fastapi import FastAPI, HTTPException
+from credentials import get_api_credentials
+
+from pydantic.dataclasses import dataclass
 
 from database.methods import connect, disconnect
 
 from structs.bus import BusStop, BusRoute, select_bus_route, select_bus_stop
 from structs.train import (
     TocData,
+    TrainService,
     TrainStation,
     TrainStationData,
+    pull_service,
     select_toc,
     select_train_station,
 )
@@ -56,3 +62,20 @@ async def get_toc(atoc: str):
     if toc is None:
         raise HTTPException(status_code=404, detail=f"Toc with atoc {atoc} not found")
     return toc
+
+
+@app.get("/train/service/{id}/{year}/{month}/{day}", response_model=TrainService)
+async def get_service(id: str, year: int, month: int, day: int):
+    run_date = arrow.get(year, month, day)
+    (conn, cur) = connect()
+    try:
+        service = pull_service(cur, id, run_date, get_api_credentials("RTT"))
+    except Exception as e:
+        disconnect(conn, cur)
+        raise e
+    disconnect(conn, cur)
+    if service is None:
+        raise HTTPException(
+            status_code=404, detail=f"Service {id} did not run on {year}-{month}-{day}"
+        )
+    return service
