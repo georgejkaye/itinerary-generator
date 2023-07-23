@@ -7,7 +7,6 @@ from selenium import webdriver
 from selenium.webdriver.firefox.options import Options
 
 from colours import get_bus_trip_colour, get_train_trip_colour
-from credentials import Credentials
 from structs import Segment, get_segment
 
 from bus.scrapers import get_bus_trip

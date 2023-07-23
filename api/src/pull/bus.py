@@ -1,17 +1,22 @@
-import json
+import csv
 import os
 import string
-import csv
 
-from typing import Dict, List
-from dataclasses import dataclass
 from pathlib import Path
-
+from dataclasses import dataclass
+from typing import Optional
 from convertbng.util import convert_lonlat  # type: ignore
 
-from data import download_binary, data_directory
+from pull.core import download_binary, data_directory
 
-from bus.structs import BusStop
+################################################################################
+#
+# NAPTAN
+#
+# NAPTAN is a data feed published as part of the Open Bus Data Service detailing
+# all bus stops across Great Britain.
+#
+################################################################################
 
 
 def get_naptan_data_url() -> str:
@@ -19,9 +24,6 @@ def get_naptan_data_url() -> str:
 
 
 naptan_path = data_directory / "naptan.csv"
-bus_stop_path = data_directory / "bus-stops.json"
-atco_lookup_path = data_directory / "atco-lookup.json"
-bus_directory = data_directory / "bus"
 
 
 def download_naptan():
@@ -45,6 +47,25 @@ east = 27
 north = 28
 lat = 29
 lon = 30
+
+################################################################################
+# BusStop
+################################################################################
+
+
+@dataclass
+class BusStop:
+    atco: str
+    naptan: Optional[str]
+    name: str
+    locality: str
+    parent: str
+    landmark: Optional[str]
+    street: str
+    indicator: Optional[str]
+    bearing: Optional[str]
+    lat: float
+    lon: float
 
 
 def trim_indicator_prefixes(prefixes: list[str], indicator: str) -> str:
@@ -75,7 +96,7 @@ replacements = {
 redundant_prefixes = ["Stop", "stop", "stand", "Stand", "bay", "platform"]
 
 
-def read_naptan() -> List[BusStop]:
+def read_naptan() -> list[BusStop]:
     stops = []
     with open(naptan_path, "r") as f:
         rows = csv.reader(f, delimiter=",")
@@ -105,6 +126,8 @@ def read_naptan() -> List[BusStop]:
                 stop_lat = float(row[lat])
                 stop_lon = float(row[lon])
             stop = BusStop(
+                stop_atco,
+                stop_naptan,
                 stop_name,
                 stop_locality,
                 stop_parent,
@@ -114,80 +137,6 @@ def read_naptan() -> List[BusStop]:
                 stop_bearing,
                 stop_lat,
                 stop_lon,
-                stop_naptan,
-                stop_atco,
             )
             stops.append(stop)
     return stops
-
-
-def get_stop_lookup(stops: List[BusStop]) -> Dict[str, BusStop]:
-    lookup = {}
-    for stop in stops:
-        lookup[stop.atco] = stop
-    return lookup
-
-
-def write_stop_lookup(lookup: Dict[str, BusStop], file: str | Path):
-    lookup_dict = {}
-    for key in lookup:
-        lookup_dict[key] = lookup[key].to_dict()  # type: ignore
-    with open(file, "w") as f:
-        f.write(json.dumps(lookup_dict))
-
-
-def write_bus_stop_data(stops: List[BusStop], file: str | Path):
-    if not os.path.isdir(bus_directory):
-        os.makedirs(bus_directory)
-    total = len(stops)
-    for i, stop in enumerate(stops):
-        print(f"writing {i+1}/{total}: {stop.atco}")
-        json = BusStop.schema().dumps(stop)  # type: ignore
-        path = bus_directory / stop.atco
-        with open(path, "w") as f:
-            f.write(json)
-
-
-def read_stop_data(file: str | Path) -> List[BusStop]:
-    with open(file, "r") as f:
-        stop_json = f.read()
-    return BusStop.schema().loads(stop_json, many=True)  # type: ignore
-
-
-def read_stop_lookup(file: str | Path) -> Dict[str, BusStop]:
-    with open(file, "r") as f:
-        data = json.loads(f.read())
-    stop_dict = {}
-    for key in data:
-        stop_dict[key] = BusStop.from_dict(data[key])  # type: ignore
-    return stop_dict
-
-
-@dataclass
-class BusData:
-    atco_lookup: Dict[str, BusStop]
-
-
-def setup_bus_data():
-    if not os.path.isdir(data_directory):
-        os.makedirs(data_directory)
-    if not os.path.isfile(naptan_path):
-        download_naptan()
-    stops = read_naptan()
-    # lookup = get_stop_lookup(stops)
-    write_bus_stop_data(stops, bus_stop_path)
-    # write_lookup(lookup, atco_lookup_path)
-    # return BusData(lookup)
-
-
-def read_bus_data() -> BusData:
-    # stops = read_stop_data(bus_stop_path)
-    lookup = read_stop_lookup(atco_lookup_path)
-    return BusData(lookup)
-
-
-def get_bus_stop_json(atco: str) -> dict:
-    path = bus_directory / atco
-    with open(path, "r") as f:
-        data = json.load(f)
-    return data

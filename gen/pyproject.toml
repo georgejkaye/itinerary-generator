@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "itinerary-generator-api"
+name = "itinerary-generator-gen"
 version = "0.1.0"
 description = "Generating html pages detailing public transport journeys across Great Britain"
 authors = ["George Kaye <georgejkaye@gmail.com>"]
@@ -31,3 +31,6 @@ black = "^23.7.0"
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
+
+[mypy]
+mypy_path = "src"

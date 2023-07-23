@@ -3,11 +3,8 @@ from credentials import get_api_credentials
 from database.connection import connect, disconnect
 from database.schema import *
 
-from bus.data import download_naptan, read_naptan
-from bus.structs import BusStop
-
-from train.data import generate_natrail_token, get_stations, get_tocs
-from train.structs import TrainStation
+from pull.bus import BusStop, download_naptan, read_naptan
+from pull.train import TrainStation, generate_natrail_token, get_stations, get_tocs
 
 
 def str_or_none_to_str(x: str | None) -> str:

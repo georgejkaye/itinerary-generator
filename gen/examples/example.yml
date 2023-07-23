@@ -1,0 +1,29 @@
+- type: bus
+  date: 2023-07-14
+  id: 277973603
+  board: "43000309402"
+  alight: "43000201701"
+  colour:
+    bg: "#189f99"
+    fg: "#f5fbfb"
+- type: train
+  date: 2023-07-14
+  id: "L34433"
+  board: "BHM"
+  alight: "WBQ"
+  colour:
+    bg: "#144f52"
+    fg: "#ffffff"
+- type: train
+  date: 2023-07-14
+  id: "L33868"
+  board: "WBQ"
+  alight: "CAR"
+  colour:
+    bg: "#144f52"
+    fg: "#ffffff"
+- type: train
+  date: 2023-07-14
+  id: "L34466"
+  board: "EUS"
+  alight: "GLC"

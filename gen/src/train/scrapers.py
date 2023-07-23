@@ -2,7 +2,7 @@ from typing import Dict, List, Optional
 from arrow import Arrow
 import arrow
 from bs4 import BeautifulSoup
-from credentials import Credentials
+from api.src.credentials import Credentials
 
 from request import get_json, get_page
 
