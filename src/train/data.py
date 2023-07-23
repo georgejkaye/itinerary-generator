@@ -2,7 +2,6 @@ import csv
 import json
 import math
 import os
-from sys import prefix
 import xml.etree.ElementTree as ET
 
 from dataclasses import dataclass
@@ -12,8 +11,9 @@ from typing import Dict, List, Tuple, Optional, TypeVar
 from bs4 import BeautifulSoup, Tag
 
 from credentials import get_api_credentials
-from data import download_binary, extract_gz, data_directory, write_lookup
+from data import download_binary, extract_gz, data_directory
 from request import Credentials, get_page, get_post_json, make_request, select_all
+
 from train.structs import Toc, TrainStation
 
 corpus_path = data_directory / "corpus.json"
@@ -225,27 +225,16 @@ def has_crs(tag: Tag) -> bool:
     return not cells[1].has_attr("class")
 
 
-def write_station_data(stations: List[TrainStation], file: str | Path):
+def write_station_data(stations: list[TrainStation], file: str | Path):
     station_json = TrainStation.schema().dumps(stations, many=True)  # type: ignore
     with open(file, "w") as f:
         f.write(station_json)
 
 
-def read_station_data(file: str | Path) -> List[TrainStation]:
+def read_station_data(file: str | Path) -> list[TrainStation]:
     with open(file, "r") as f:
         station_json = f.read()
     return TrainStation.schema().loads(station_json, many=True)  # type: ignore
-
-
-def get_station_lookups(
-    stations: List[TrainStation],
-) -> Tuple[Dict[str, TrainStation], Dict[str, TrainStation]]:
-    tiploc_lookup = {}
-    crs_lookup = {}
-    for stn in stations:
-        tiploc_lookup[stn.tiploc] = stn
-        crs_lookup[stn.crs] = stn
-    return (tiploc_lookup, crs_lookup)
 
 
 def read_station_lookup(file: str | Path) -> Dict[str, TrainStation]:
@@ -272,8 +261,6 @@ def download_brands():
 
 @dataclass
 class TrainData:
-    tiploc_lookup: dict[str, TrainStation]
-    crs_lookup: dict[str, TrainStation]
     brands: dict[str, dict]
 
 
@@ -296,17 +283,10 @@ def setup_train_data() -> TrainData:
     write_dict_as_json(crs_to_tiploc, crs_to_tiploc_path)
     bplan = read_tsv_as_list(bplan_path)
     stations = translate_bplan_to_stations(bplan, tiploc_to_crs)
-    (tiploc_lookup, crs_lookup) = get_station_lookups(stations)
-    write_lookup(tiploc_lookup, tiploc_lookup_path)
-    write_lookup(crs_lookup, crs_lookup_path)
-    write_station_data(stations, station_json_path)
     brands = read_json_as_dict(brands_path)
-    return TrainData(tiploc_lookup, crs_lookup, brands)
+    return TrainData(brands)
 
 
 def read_train_data() -> TrainData:
-    # stations = read_station_data(station_json_path)
-    tiploc_lookup = read_station_lookup(tiploc_lookup_path)
-    crs_lookup = read_station_lookup(crs_lookup_path)
     brands = read_json_as_dict(brands_path)
-    return TrainData(tiploc_lookup, crs_lookup, brands)
+    return TrainData(brands)

@@ -5,6 +5,7 @@ from bs4 import BeautifulSoup
 from credentials import Credentials
 
 from request import get_json, get_page
+
 from train.structs import TrainService, TrainServiceStop, TrainStation, TrainStop
 from train.urls import get_train_service_url
 

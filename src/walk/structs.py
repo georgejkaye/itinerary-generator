@@ -2,6 +2,7 @@ from dataclasses import dataclass
 from typing import List, Optional, Sequence, Tuple
 from arrow import Arrow
 from dataclasses_json import dataclass_json
+
 from walk.urls import get_osm_map_at_latlon_url, get_walking_instructions_url
 
 from structs import (

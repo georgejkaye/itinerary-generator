@@ -1,9 +1,6 @@
 from typing import Tuple
-from arrow import Arrow
-from bs4 import BeautifulSoup
 from dotenv import dotenv_values
 import openrouteservice  # type: ignore
-from request import select_one
 
 
 def get_direction_stats(

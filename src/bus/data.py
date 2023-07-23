@@ -1,13 +1,17 @@
-from dataclasses import dataclass
 import json
 import os
 import string
-from pathlib import Path
-from typing import Dict, List
-from bus.structs import BusStop
-from data import download_binary, data_directory, write_lookup
 import csv
+
+from typing import Dict, List
+from dataclasses import dataclass
+from pathlib import Path
+
 from convertbng.util import convert_lonlat  # type: ignore
+
+from data import download_binary, data_directory
+
+from bus.structs import BusStop
 
 
 def get_naptan_data_url() -> str:

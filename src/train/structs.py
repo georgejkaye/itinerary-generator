@@ -1,10 +1,10 @@
 from dataclasses import dataclass
 from arrow import Arrow
 from dataclasses_json import dataclass_json
-
 from typing import Dict, List, Optional, Sequence, Tuple
 
 from structs import StopInterface, TripInterface, TripStopInterface
+
 from train.urls import get_train_service_url, get_train_station_url
 
 

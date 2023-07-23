@@ -1,7 +1,7 @@
-import json
+import requests
+
 from typing import Optional
 from bs4 import BeautifulSoup, ResultSet, Tag
-import requests
 from requests import Response
 from requests.auth import HTTPBasicAuth
 

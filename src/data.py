@@ -1,9 +1,11 @@
 import gzip
 import json
 import os
-from pathlib import Path
 import shutil
+
+from pathlib import Path
 from typing import Dict, Optional, TypeVar
+
 from credentials import Credentials
 from request import make_request
 

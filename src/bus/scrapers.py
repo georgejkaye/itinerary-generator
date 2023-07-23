@@ -4,6 +4,7 @@ from arrow import Arrow
 import arrow
 
 from request import get_href, get_id, get_page, select_all, select_one
+
 from bus.structs import BusStop, BusTrip, BusTripStop
 from bus.data import get_bus_stop_json
 from bus.urls import get_bus_service_url, get_bus_stop_url, get_bus_trip_url

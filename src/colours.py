@@ -6,11 +6,9 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.wait import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 
-from bus.scrapers import get_bus_stop
-from bus.structs import BusTrip, BusTripStop
-
 from data import colours_dir, record_colours
-from structs import TripStopInterface
+
+from bus.structs import BusTrip, BusTripStop
 from train.structs import TrainService, TrainServiceStop
 
 

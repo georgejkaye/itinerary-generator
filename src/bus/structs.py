@@ -1,12 +1,11 @@
 from dataclasses import dataclass
 from typing import List, Optional, Sequence, Tuple
 from arrow import Arrow
-import arrow
 from dataclasses_json import dataclass_json
+
 from bus.urls import get_bus_service_url, get_bus_stop_url, get_bus_trip_url
 
 from structs import (
-    Segment,
     ServiceInterface,
     StopInterface,
     TripInterface,
