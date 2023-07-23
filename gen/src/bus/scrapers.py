@@ -3,10 +3,16 @@ from bs4 import BeautifulSoup, Tag
 from arrow import Arrow
 import arrow
 
-from request import get_href, get_id, get_page, select_all, select_one
+from request import (
+    get_href,
+    get_id,
+    get_page,
+    select_all,
+    select_one,
+    get_json_from_api,
+)
 
 from bus.structs import BusStop, BusTrip, BusTripStop
-from bus.data import get_bus_stop_json
 from bus.urls import get_bus_service_url, get_bus_stop_url, get_bus_trip_url
 
 
@@ -48,9 +54,23 @@ def get_bus_stop_atco(stop_page: BeautifulSoup) -> str:
 bracket_regex = r"(.*) \((.*)\)"
 
 
-def get_bus_stop(atco: str) -> BusStop:
-    json = get_bus_stop_json(atco)
-    stop = BusStop.from_dict(json)  # type: ignore
+def get_bus_stop(atco: str) -> Optional[BusStop]:
+    json = get_json_from_api(f"bus/stop/{atco}")
+    if json is None:
+        return None
+    stop = BusStop(
+        json["atco"],
+        json["naptan"],
+        json["name"],
+        json["locality"],
+        json["parent"],
+        json["locality"],
+        json["street"],
+        json["indicator"],
+        json["bearing"],
+        json["lat"],
+        json["lon"],
+    )
     return stop
 
 
@@ -102,11 +122,13 @@ def get_time_from_trip_stop_row(date: Arrow, row: Tag, cell_index: int) -> Arrow
 
 def get_trip_stop_details(
     date: Arrow, arr_row: Tag, dep_row: Optional[Tag], service_page: BeautifulSoup
-) -> BusTripStop:
+) -> Optional[BusTripStop]:
     link = select_one(arr_row, "a")
     href = get_href(link)
     atco = href.split("/")[2]
     stop = get_bus_stop(atco)
+    if stop is None:
+        return None
     arr_time = get_time_from_trip_stop_row(date, arr_row, 1)
     if dep_row is None:
         dep_time = arr_time
@@ -117,7 +139,7 @@ def get_trip_stop_details(
 
 def get_trip_stop_details_at_time(
     trip_page: BeautifulSoup, date: Arrow, stop_time: int, service_page: BeautifulSoup
-) -> BusTripStop:
+) -> Optional[BusTripStop]:
     rows = select_all(trip_page, ".trip-timetable tbody tr")
     desired_id = f"stop-time-{stop_time}"
     for i, row in enumerate(rows):
@@ -138,7 +160,7 @@ def get_all_trip_stop_details(
     date: Arrow, trip_page: BeautifulSoup, service_page: BeautifulSoup
 ) -> List[BusTripStop]:
     rows = select_all(trip_page, ".trip-timetable tbody tr")
-    stop_rows = []
+    stops = []
     current_index = 0
     while current_index < len(rows):
         arr_row = rows[current_index]
@@ -149,13 +171,12 @@ def get_all_trip_stop_details(
         else:
             dep_row = None
             current_index = current_index + 1
-        stop_rows.append((arr_row, dep_row))
-    return list(
-        map(
-            lambda r: get_trip_stop_details(date, r[0], r[1], service_page),
-            stop_rows,
-        )
-    )
+        stop_details = get_trip_stop_details(date, arr_row, dep_row, service_page)
+        if stop_details is None:
+            raise RuntimeError("Stop on service does not exist!")
+        else:
+            stops.append(stop_details)
+    return stops
 
 
 def get_stop_time_from_stop_id(trip_page: BeautifulSoup, stop_id: int) -> Optional[int]:
